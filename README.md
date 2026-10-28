@@ -19,8 +19,6 @@ Para verla en tu computadora, serví la carpeta con cualquier servidor estático
 
 ## Créditos
 
-Idea inspirada en [Turigoza](https://javierbalvin-zgz.github.io/turigoza/), de Javier Balvín. El código, los modelos y los textos de este proyecto son propios.
-
 Fotos de Wikimedia Commons, enlazadas desde su servidor:
 
 | Lugar | Archivo | Autor | Licencia |
