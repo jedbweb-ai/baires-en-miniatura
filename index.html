@@ -1,0 +1,1624 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Baires en miniatura</title>
+<meta name="description" content="Buenos Aires en un planeta de bolsillo: una maqueta 3D interactiva de la Ciudad con sus lugares más queridos.">
+<meta name="theme-color" content="#d4e6f3">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Baires en miniatura">
+<meta property="og:description" content="Buenos Aires en un planeta de bolsillo: 25 lugares, el Subte y el Río de la Plata en una maqueta 3D interactiva.">
+<meta property="og:url" content="https://jedbweb-ai.github.io/baires-en-miniatura/">
+<meta property="og:image" content="https://jedbweb-ai.github.io/baires-en-miniatura/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2374acdf'/%3E%3Crect x='2' y='24' width='60' height='16' fill='%23fff'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23f2b134'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('intro');</script>
+<style>
+:root{
+  --paper:#fbf8f2; --card:rgba(255,253,249,.86); --ink:#1b2230; --muted:#5d6676; --line:rgba(27,34,48,.10);
+  --celeste:#74acdf; --sol:#f2b134; --accent:#2f6fae;
+  --sky-a:#fbf4e8; --sky-b:#d4e6f3; --sky-c:#b9d5ea;
+  --shadow:0 10px 30px -12px rgba(27,34,48,.28), 0 2px 6px rgba(27,34,48,.06);
+  --r:16px; --display:'Young Serif', Georgia, serif; --ui:'Manrope', system-ui, sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#121a2a; --card:rgba(20,28,44,.84); --ink:#eef2f8; --muted:#a3adbf; --line:rgba(238,242,248,.12);
+  --accent:#8cbcf0; --sky-a:#1c2a48; --sky-b:#0e1628; --sky-c:#070b16;
+  --shadow:0 10px 30px -12px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--ui);color:var(--ink);background:radial-gradient(120% 90% at 50% 42%,var(--sky-a) 0%,var(--sky-b) 55%,var(--sky-c) 100%);transition:background .8s;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:10px}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#c.dragging{cursor:grabbing}
+.glass{background:var(--card);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid var(--line);box-shadow:var(--shadow)}
+
+/* Barra superior */
+.bar{position:fixed;top:16px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;z-index:5}
+.bar>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:8px 16px 8px 10px;border-radius:var(--r)}
+.brand svg{width:30px;height:30px;flex:none}
+.brand-name{font-family:var(--display);font-size:24px;font-weight:400;letter-spacing:-.01em;line-height:1}
+.brand-sub{font-size:12px;color:var(--muted);font-weight:500;margin-left:2px;align-self:flex-end;padding-bottom:2px}
+.actions{display:flex;gap:8px;align-items:center}
+.chip{height:44px;padding:0 16px;border-radius:14px;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+.chip:hover{background:var(--paper)}
+.primary{height:44px;padding:0 8px 0 18px;border-radius:14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--paper);box-shadow:var(--shadow)}
+.primary .ico{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+:root[data-theme="dark"] .primary .ico{background:rgba(0,0,0,.12)}
+.primary[aria-pressed="true"]{background:var(--sol);color:#1b2230}
+
+/* Lista de lugares */
+.list{position:fixed;top:72px;right:16px;width:320px;max-height:calc(100vh - 168px);overflow:auto;border-radius:var(--r);padding:8px;z-index:6;transform-origin:top right;transition:opacity .2s,transform .2s}
+.list.closed{opacity:0;transform:translateY(-6px) scale(.98);pointer-events:none}
+.list h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:10px 12px 8px}
+.list ol{list-style:none}
+.list li button{width:100%;display:grid;grid-template-columns:34px 1fr;align-items:center;gap:8px;text-align:left;padding:8px 10px;border-radius:12px}
+.list li button:hover,.list li button[aria-current="true"]{background:var(--paper)}
+.list .num{font-family:var(--display);font-size:15px;color:var(--c);font-weight:400}
+.list .nm{font-weight:600;font-size:14px;display:block}
+.list .sb{font-size:12px;color:var(--muted)}
+
+/* Ficha */
+.panel{position:fixed;top:72px;right:16px;bottom:16px;width:380px;border-radius:20px;z-index:7;overflow:auto;overscroll-behavior:contain;padding:22px 22px 18px;transform:translateX(calc(100% + 24px));transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+body.panel-open .panel{transform:none}
+.grab{display:none}
+.p-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--c)}
+.panel h2{font-family:var(--display);font-weight:400;font-size:32px;line-height:1.05;letter-spacing:-.015em;margin-top:6px}
+.p-sub{color:var(--muted);font-size:14px;margin-top:4px}
+.p-tools{display:flex;gap:6px}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--paper);border:1px solid var(--line)}
+.icon-btn:hover{border-color:var(--ink)}
+.photo{position:relative;margin-top:18px;border-radius:14px;overflow:hidden;aspect-ratio:16/10;background:linear-gradient(135deg,var(--c),#1b2230)}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(10,14,24,.72))}
+.photo figcaption{position:absolute;left:16px;right:16px;bottom:12px;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;color:#fff}
+.year{font-family:var(--display);font-size:46px;line-height:.9;font-weight:400}
+.yearl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;text-align:right;max-width:55%}
+.pcredit{font-size:11px;color:var(--muted);margin-top:6px}
+.pcredit a{text-decoration-color:var(--line)}
+.p-actions{display:flex;gap:8px;margin-top:14px}
+.btn-go{flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;height:46px;padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px}
+:root[data-theme="dark"] .btn-go{color:#0e1628}
+.btn-go small{font-weight:500;opacity:.8;font-size:12px}
+.btn-web{height:46px;padding:0 14px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;font-weight:600;font-size:14px;text-decoration:none;background:var(--paper)}
+.desc{margin-top:16px;font-size:15px;line-height:1.6;color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 10px 12px}
+.stat b{display:block;font-family:var(--display);font-weight:400;font-size:20px;line-height:1.1;overflow-wrap:anywhere}
+.stat span{display:block;font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35}
+.tip{margin-top:14px;border-left:3px solid var(--sol);padding:4px 0 4px 12px;font-size:14px;line-height:1.55}
+.tip b{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.p-nav{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.p-nav button{height:40px;padding:0 12px;border-radius:10px;font-weight:600;font-size:14px}
+.p-nav button:hover{background:var(--paper)}
+.p-nav span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+body.panel-min .panel{transform:translateY(calc(100% - 128px))}
+
+/* Etiquetas sobre la maqueta */
+#labels{position:fixed;inset:0;pointer-events:none;z-index:3}
+.pin{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:0;height:28px;padding:0 4px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:0 4px 12px -4px rgba(27,34,48,.35);font-size:12px;font-weight:700;white-space:nowrap;transition:opacity .25s,gap .2s,padding .2s;will-change:transform}
+.pin b{width:20px;height:20px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:700}
+.pin span{max-width:0;overflow:hidden;transition:max-width .25s}
+.pin:hover,.pin.sel,body.names .pin{gap:6px;padding:0 10px 0 4px}
+.pin:hover span,.pin.sel span,body.names .pin span{max-width:240px}
+.pin.sel{background:var(--ink);color:var(--paper)}
+.pin.off{opacity:0;pointer-events:none}
+html.intro .pin{opacity:0}
+
+/* Dock inferior */
+.dock{position:fixed;left:16px;bottom:16px;display:flex;gap:8px;z-index:5}
+.dock button{width:46px;height:46px;border-radius:14px;display:grid;place-items:center}
+.dock button:hover{background:var(--paper)}
+.dock button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);font-size:13px;color:var(--muted);padding:8px 14px;border-radius:999px;z-index:4;white-space:nowrap;transition:opacity .4s}
+.credit{position:fixed;right:16px;bottom:16px;font-size:12px;color:var(--muted);padding:7px 12px;border-radius:999px;z-index:4}
+.credit a{font-weight:600;color:var(--ink);text-decoration:none}
+.follow{position:fixed;left:50%;top:76px;transform:translateX(-50%);font-size:13px;font-weight:600;padding:8px 8px 8px 14px;border-radius:999px;z-index:5;display:flex;gap:10px;align-items:center}
+.follow button{height:30px;padding:0 12px;border-radius:999px;background:var(--ink);color:var(--paper);font-size:12px;font-weight:700}
+body.touched .hint,body.panel-open .hint,body.panel-open .credit,body.subte-on .hint{opacity:0;pointer-events:none}
+
+/* Ayuda de teclado */
+.help{position:fixed;left:16px;bottom:74px;width:300px;border-radius:var(--r);padding:16px;z-index:6;font-size:13px}
+.help h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.help dl{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+.help dt kbd{font-family:var(--ui);font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid var(--line);background:var(--paper);white-space:nowrap}
+.help dd{color:var(--muted)}
+
+/* Leyenda del Subte */
+.legend{position:fixed;left:16px;bottom:74px;width:310px;max-height:calc(100vh - 170px);overflow:auto;border-radius:var(--r);padding:14px 16px;z-index:6;font-size:13px}
+.legend h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.legend ul{list-style:none}
+.legend li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:center;padding:5px 0}
+.legend .ln{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;background:var(--c)}
+.legend .ln.lt{color:#1b2230}
+.legend b{display:block;font-weight:600;font-size:13px}
+.legend span{color:var(--muted);font-size:12px}
+.legend-note{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.45}
+
+/* Cargador */
+.loader{position:fixed;inset:0;display:grid;place-items:center;z-index:20;background:radial-gradient(120% 90% at 50% 42%,var(--sky-a),var(--sky-b));transition:opacity .9s .2s,visibility 0s 1.1s}
+.loader.done{opacity:0;visibility:hidden}
+.loader .word{font-size:13px;letter-spacing:.42em;font-weight:700;text-align:center;padding-left:.42em}
+.loader .track{width:140px;height:2px;background:var(--line);margin:14px auto 0;border-radius:2px;overflow:hidden}
+.loader i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+@media (max-width:760px){
+  .bar{top:12px;left:12px;right:12px}
+  .brand{padding:6px 12px 6px 8px}.brand-name{font-size:20px}.brand-sub{display:none}
+  .chip{padding:0 12px}.primary{padding:0 6px 0 14px}
+  .primary .lbl-long{display:none}
+  .list{left:12px;right:12px;width:auto;top:66px}
+  .panel{left:0;right:0;bottom:0;top:auto;width:auto;max-height:62vh;border-radius:22px 22px 0 0;transform:translateY(105%);padding:18px 18px calc(16px + env(safe-area-inset-bottom))}
+  .panel h2{font-size:26px}
+  .grab{display:block;width:100%;height:22px;margin:-10px 0 4px;position:relative}
+  .grab::before{content:"";position:absolute;left:50%;top:8px;width:42px;height:5px;margin-left:-21px;border-radius:3px;background:var(--line);box-shadow:inset 0 0 0 1px var(--line)}
+  body.panel-min .panel{transform:translateY(calc(100% - 118px))}
+  .hint{bottom:76px;font-size:12px}
+  .credit{left:auto;right:12px;bottom:16px}
+  .dock{left:12px;bottom:12px}
+  .help,.legend{left:12px;right:12px;width:auto}
+  .legend ul{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+  .legend li{grid-template-columns:24px 1fr;gap:8px}
+  .legend b{font-size:12px;line-height:1.25}
+  .legend li>span>span,.legend-note{display:none}
+}
+@media (max-width:420px){ .chip .lbl-long{display:none} .credit{display:none} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="c" role="img"></canvas>
+<div id="labels"></div>
+
+<header class="bar">
+  <button class="brand glass" id="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#74acdf"/><rect x="2" y="23" width="60" height="18" fill="#fff"/><circle cx="32" cy="32" r="6.5" fill="#f2b134"/><g stroke="#f2b134" stroke-width="2" stroke-linecap="round"><path d="M32 20v4M32 40v4M20 32h4M40 32h4M23.5 23.5l2.8 2.8M37.7 37.7l2.8 2.8M23.5 40.5l2.8-2.8M37.7 26.3l2.8-2.8"/></g></svg>
+    <span class="brand-name">Baires</span><span class="brand-sub" data-t="brandSub"></span>
+  </button>
+  <div class="actions">
+    <button class="chip glass" id="langBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span id="langLbl">ES</span></button>
+    <button class="chip glass" id="listBtn" aria-expanded="false" aria-controls="list"><span class="lbl-long" data-t="places"></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+    <button class="primary" id="tourBtn" aria-pressed="false"><span class="lbl-long" data-t="tour"></span><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H17a3.5 3.5 0 0 0 0-7H7a3.5 3.5 0 0 1 0-7h8.5"/></svg></span></button>
+  </div>
+</header>
+
+<nav class="list glass closed" id="list"><h3 id="listTitle"></h3><ol id="listItems"></ol></nav>
+
+<aside class="panel glass" id="panel" aria-live="polite"></aside>
+
+<div class="dock">
+  <button class="glass" id="helpBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></button>
+  <button class="glass" id="homeBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18M3.5 9h17M3.5 15h17"/></svg></button>
+  <button class="glass" id="nightBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <button class="glass" id="spinBtn" aria-pressed="false"><svg id="spinIco" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg></button>
+  <button class="glass" id="subteBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8.5 21l1.5-4M15.5 21l-1.5-4M9 13.5h.01M15 13.5h.01"/></svg></button>
+</div>
+<div class="legend glass" id="legend" hidden><h3 id="legendTitle"></h3><ul id="legendList"></ul><p class="legend-note" id="legendNote"></p></div>
+<div class="help glass" id="help" hidden><h3 id="helpTitle"></h3><dl id="helpList"></dl></div>
+<p class="hint glass" id="hint"></p>
+<p class="credit glass" id="credit"></p>
+
+<div class="loader" id="loader"><div><div class="word">BUENOS AIRES</div><div class="track"><i id="pct"></i></div></div></div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = id => document.getElementById(id);
+const D2R = Math.PI/180, R = 18, U = R*D2R;          // U: unidades de escena por grado del planeta
+const V3 = (x=0,y=0,z=0) => new THREE.Vector3(x,y,z);
+const clamp = THREE.MathUtils.clamp, lerp = THREE.MathUtils.lerp;
+const smooth = (a,b,x) => { const t = clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ==========================================================================
+   Proyección: la Ciudad real (lat/lon) sobre un planeta de bolsillo.
+   Centro en el Obelisco; la distancia se comprime (d^0.6) para que el centro
+   tenga lugar y Palermo o La Boca sigan entrando en la misma cara.
+   Espacio "P": plano azimutal en grados del planeta (x = este, y = norte).
+   ========================================================================== */
+const LAT0 = -34.6037, LON0 = -58.3816, KA = 17, KK = 0.6, COSL = Math.cos(LAT0*D2R);
+const toKm = (lat,lon) => [(lon-LON0)*COSL*111.32, (lat-LAT0)*110.574];
+function kmToP(x,y){ const d = Math.hypot(x,y); if(d < 1e-9) return [0,0]; const t = KA*Math.pow(d,KK); return [t*x/d, t*y/d]; }
+function pToKm(px,py){ const t = Math.hypot(px,py); if(t < 1e-9) return [0,0]; const d = Math.pow(t/KA,1/KK); return [px/t*d, py/t*d]; }
+const llToP = (lat,lon) => kmToP(...toKm(lat,lon));
+function pToDir(px,py,out = V3()){ const t = Math.hypot(px,py); if(t < 1e-9) return out.set(0,0,1); const s = Math.sin(t*D2R)/t; return out.set(px*s, py*s, Math.cos(t*D2R)); }
+function dirToP(n){ const t = Math.acos(clamp(n.z,-1,1))/D2R, h = Math.hypot(n.x,n.y); if(h < 1e-9) return [0,0]; return [n.x/h*t, n.y/h*t]; }
+function frameAt(px,py){ const n = pToDir(px,py), e = pToDir(px+.02,py).sub(n); e.addScaledVector(n,-e.dot(n)).normalize(); return { n, e, s: V3().crossVectors(e,n) }; }
+
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hash(x,y){ let h = Math.imul(x|0,374761393) ^ Math.imul(y|0,668265263); h = Math.imul(h ^ (h>>>13),1274126177); return ((h ^ (h>>>16))>>>0)/4294967296; }
+function vnoise(x,y){ const xi = Math.floor(x), yi = Math.floor(y), xf = x-xi, yf = y-yi, u = xf*xf*(3-2*xf), v = yf*yf*(3-2*yf);
+  return lerp(lerp(hash(xi,yi),hash(xi+1,yi),u), lerp(hash(xi,yi+1),hash(xi+1,yi+1),u), v); }
+
+/* ==========================================================================
+   Geografía (coordenadas reales aproximadas)
+   ========================================================================== */
+// Costa del Río de la Plata, de noroeste a sureste. El agua queda a la izquierda.
+const COAST_LL = [[-34.47,-58.505],[-34.505,-58.475],[-34.530,-58.450],[-34.545,-58.430],[-34.556,-58.413],[-34.568,-58.397],[-34.579,-58.380],[-34.586,-58.366],[-34.595,-58.352],[-34.605,-58.338],[-34.618,-58.337],[-34.630,-58.342],[-34.640,-58.340],[-34.655,-58.325],[-34.680,-58.290],[-34.720,-58.230]];
+const RIACH_LL = [[-34.6330,-58.3380],[-34.6355,-58.3480],[-34.6375,-58.3560],[-34.6392,-58.3625],[-34.6440,-58.3680],[-34.6478,-58.3760],[-34.6500,-58.3870],[-34.6555,-58.3990],[-34.6620,-58.4140],[-34.6700,-58.4300],[-34.6800,-58.4480],[-34.6920,-58.4630],[-34.7050,-58.4790],[-34.7200,-58.4950]];
+const ROADS = [
+  { id:'9julio', name:'Av. 9 de Julio', w:.74, kind:'wide', ll:[[-34.5862,-58.3800],[-34.5935,-58.3809],[-34.6037,-58.3816],[-34.6130,-58.3813],[-34.6215,-58.3808],[-34.6290,-58.3805]] },
+  { id:'mayo', name:'Av. de Mayo', w:.28, ll:[[-34.6085,-58.3722],[-34.6090,-58.3816],[-34.6093,-58.3905]] },
+  { id:'corrientes', name:'Av. Corrientes', w:.28, ll:[[-34.6031,-58.3705],[-34.6037,-58.3816],[-34.6043,-58.3950],[-34.6030,-58.4100],[-34.5990,-58.4350],[-34.5900,-58.4550]] },
+  { id:'diagonal', name:'Diagonal Norte', w:.24, ll:[[-34.6079,-58.3734],[-34.6037,-58.3816]] },
+  { id:'libertador', name:'Av. del Libertador', w:.32, ll:[[-34.5905,-58.3765],[-34.5860,-58.3880],[-34.5810,-58.3950],[-34.5730,-58.4050],[-34.5650,-58.4160],[-34.5520,-58.4330],[-34.5390,-58.4560]] },
+  { id:'paseocolon', name:'Paseo Colón', w:.28, ll:[[-34.6110,-58.3695],[-34.6200,-58.3690],[-34.6290,-58.3680],[-34.6345,-58.3615]] },
+];
+// Subte: cada punto es una estación (trazado simplificado)
+const SUBTE = [
+  { id:'A', c:'#18a7e0', year:1913, ends:'Plaza de Mayo – San Pedrito', es:'la primera de Latinoamérica', en:'the first in Latin America',
+    st:[[-34.6085,-58.3725],[-34.6090,-58.3790],[-34.6092,-58.3860],[-34.6092,-58.3925],[-34.6097,-58.4065],[-34.6115,-58.4215],[-34.6200,-58.4410],[-34.6305,-58.4690]] },
+  { id:'B', c:'#ee3d3d', year:1930, ends:'L. N. Alem – J. M. de Rosas', es:'corre bajo la avenida Corrientes', en:'runs under Corrientes avenue',
+    st:[[-34.6030,-58.3700],[-34.6037,-58.3805],[-34.6044,-58.3925],[-34.6045,-58.4050],[-34.6033,-58.4210],[-34.5990,-58.4340],[-34.5915,-58.4475],[-34.5873,-58.4547],[-34.5810,-58.4660],[-34.5740,-58.4865]] },
+  { id:'C', c:'#2b70c4', year:1934, ends:'Retiro – Constitución', es:'une las dos grandes terminales de tren', en:'links the two big rail terminals',
+    st:[[-34.5915,-58.3745],[-34.5955,-58.3775],[-34.6020,-58.3790],[-34.6045,-58.3795],[-34.6090,-58.3805],[-34.6125,-58.3808],[-34.6180,-58.3805],[-34.6220,-58.3800],[-34.6280,-58.3815]] },
+  { id:'D', c:'#00866b', year:1937, ends:'Catedral – Congreso de Tucumán', es:'cruza Recoleta y Palermo hacia el norte', en:'heads north through Recoleta and Palermo',
+    st:[[-34.6075,-58.3735],[-34.6040,-58.3810],[-34.6015,-58.3850],[-34.5995,-58.3925],[-34.5995,-58.3975],[-34.5945,-58.4030],[-34.5915,-58.4075],[-34.5880,-58.4115],[-34.5850,-58.4160],[-34.5810,-58.4210],[-34.5785,-58.4255],[-34.5750,-58.4350],[-34.5700,-58.4445],[-34.5660,-58.4520],[-34.5620,-58.4565],[-34.5555,-58.4625]] },
+  { id:'E', c:'#7a2f8c', year:1944, ends:'Retiro – Plaza de los Virreyes', es:'baja hacia el sudoeste', en:'runs to the south-west',
+    st:[[-34.5915,-58.3745],[-34.5965,-58.3710],[-34.6030,-58.3705],[-34.6092,-58.3740],[-34.6128,-58.3778],[-34.6180,-58.3805],[-34.6225,-58.3850],[-34.6230,-58.3915],[-34.6232,-58.3970],[-34.6238,-58.4045],[-34.6245,-58.4090],[-34.6255,-58.4155],[-34.6270,-58.4265],[-34.6280,-58.4340],[-34.6300,-58.4420],[-34.6340,-58.4510],[-34.6390,-58.4580],[-34.6430,-58.4610]] },
+  { id:'H', c:'#f5c400', year:2007, ends:'Facultad de Derecho – Hospitales', es:'la más nueva, de norte a sur', en:'the newest, north to south',
+    st:[[-34.5830,-58.3910],[-34.5875,-58.3960],[-34.5945,-58.4020],[-34.5985,-58.4045],[-34.6045,-58.4050],[-34.6090,-58.4060],[-34.6150,-58.4050],[-34.6235,-58.4045],[-34.6290,-58.4010],[-34.6355,-58.3985],[-34.6380,-58.4050],[-34.6415,-58.4120]] },
+];
+// Verdes grandes: [lat, lon, radio en km]
+const PARKS_LL = [[-34.5735,-58.4170,1.0],[-34.6130,-58.3455,.85],[-34.5955,-58.3760,.16],[-34.6285,-58.3695,.17],[-34.5850,-58.3905,.22],[-34.6065,-58.4355,.22],[-34.5630,-58.4440,.35]];
+const PARKS = PARKS_LL.map(([la,lo,r]) => { const [x,y] = toKm(la,lo); return {x,y,r}; });
+// Torres de Puerto Madero
+const MADERO = (() => { const [x,y] = toKm(-34.6120,-58.3610); return {x,y,r:.55}; })();
+
+function densifyP(ll, stepKm=.05){
+  const out = [];
+  for(let i=0;i<ll.length-1;i++){
+    const a = toKm(...ll[i]), b = toKm(...ll[i+1]), n = Math.max(1, Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/stepKm));
+    for(let k=0;k<n;k++) out.push(kmToP(a[0]+(b[0]-a[0])*k/n, a[1]+(b[1]-a[1])*k/n));
+  }
+  out.push(llToP(...ll[ll.length-1]));
+  return out;
+}
+function segD2(px,py,ax,ay,bx,by){ const dx = bx-ax, dy = by-ay, l = dx*dx+dy*dy; let t = l ? ((px-ax)*dx+(py-ay)*dy)/l : 0; t = t<0?0:t>1?1:t; const qx = ax+dx*t-px, qy = ay+dy*t-py; return qx*qx+qy*qy; }
+function polyDist(pts,px,py){ let best = Infinity, bi = 0; for(let i=0;i<pts.length-1;i++){ const d = segD2(px,py,pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]); if(d < best){ best = d; bi = i; } } return { d: Math.sqrt(best), i: bi }; }
+
+const COAST = (() => { const p = densifyP(COAST_LL,.2), a = p[0], b = p[1], y = p[p.length-1], z = p[p.length-2];
+  const ext = (q,r) => { const dx = q[0]-r[0], dy = q[1]-r[1], l = Math.hypot(dx,dy); return [q[0]+dx/l*320, q[1]+dy/l*320]; };
+  return [ext(a,b), ...p, ext(y,z)]; })();
+function coastSD(px,py){ // grados; > 0 en el agua
+  const {d,i} = polyDist(COAST,px,py), a = COAST[i], b = COAST[i+1];
+  return ((b[0]-a[0])*(py-a[1]) - (b[1]-a[1])*(px-a[0])) > 0 ? d : -d;
+}
+const RIACH = densifyP(RIACH_LL,.05);
+const inPark = (kx,ky) => PARKS.some(p => (kx-p.x)**2 + (ky-p.y)**2 < p.r*p.r);
+
+/* ==========================================================================
+   Lugares
+   ========================================================================== */
+const CATS = {
+  icon:{ c:'#2f6fae', es:'Ícono', en:'Landmark', pt:'Ícone' }, hist:{ c:'#b5523b', es:'Historia', en:'History', pt:'História' },
+  cult:{ c:'#7b4f9d', es:'Cultura', en:'Culture', pt:'Cultura' }, barrio:{ c:'#cf7f12', es:'Barrio', en:'Neighbourhood', pt:'Bairro' },
+  dep:{ c:'#1f55a8', es:'Fútbol', en:'Football', pt:'Futebol' }, mod:{ c:'#23847e', es:'Moderno', en:'Modern', pt:'Moderno' }, mem:{ c:'#6b6876', es:'Patrimonio', en:'Heritage', pt:'Patrimônio' },
+  nat:{ c:'#3f8a3c', es:'Verde', en:'Green space', pt:'Área verde' },
+};
+const PLACES = [
+ { id:'obelisco', ll:[-34.60373,-58.38157], cat:'icon', foot:1.1, top:4.8, face:'S', on:['9julio','corrientes','diagonal'], year:'1936',
+   photo:{ f:'Obelisco de Buenos Aires at sunset.jpg', a:'Dpalma01', l:'CC BY-SA 4.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/obelisco',
+   es:{ name:'Obelisco', sub:'Plaza de la República · 9 de Julio y Corrientes', yearl:'se inaugura',
+     desc:'El punto de encuentro de la ciudad: acá se festejan los mundiales y se cruza la avenida más ancha. Lo diseñó Alberto Prebisch para los 400 años de la primera fundación, en el lugar donde se izó por primera vez la bandera en Buenos Aires.',
+     stats:[['67,5 m','de altura'],['31','días de obra'],['206','escalones hasta la ventanita']],
+     tip:'La foto clásica sale desde la isla central de la 9 de Julio, mirando por Corrientes al atardecer.' },
+   en:{ name:'Obelisk', sub:'Plaza de la República · 9 de Julio & Corrientes', yearl:'unveiled',
+     desc:'The city’s meeting point: World Cup wins are celebrated here, on the widest avenue in town. Alberto Prebisch designed it for the 400th anniversary of the first founding, on the spot where the flag was first raised in Buenos Aires.',
+     stats:[['67.5 m','tall'],['31','days to build'],['206','steps up to the little window']],
+     tip:'The classic shot is from the 9 de Julio median, looking down Corrientes at sunset.' } },
+ { id:'colon', ll:[-34.60111,-58.38330], cat:'cult', foot:1.55, top:1.9, face:'W', on:[], year:'1908',
+   photo:{ f:'Fachada del Teatro Colón en Buenos Aires, Argentina.jpg', a:'EEJCC', l:'CC0' }, web:'https://teatrocolon.org.ar/',
+   es:{ name:'Teatro Colón', sub:'Ópera · Plaza Lavalle', yearl:'abre con Aída',
+     desc:'Una de las grandes salas líricas del mundo, famosa por una acústica casi perfecta. Su obra pasó por tres arquitectos (Tamburini, Meano y Dormal) y abrió sus puertas un 25 de mayo.',
+     stats:[['≈2.500','butacas en la sala'],['3','arquitectos se pasaron la obra'],['Top 5','acústicas del mundo']],
+     tip:'Hay visitas guiadas casi todos los días: es la forma de ver la sala sin tener entrada para una función.' },
+   en:{ name:'Teatro Colón', sub:'Opera house · Plaza Lavalle', yearl:'opens with Aida',
+     desc:'One of the world’s great opera houses, famous for its near-perfect acoustics. Three architects (Tamburini, Meano and Dormal) took turns on the project before it opened on a 25th of May.',
+     stats:[['≈2,500','seats in the hall'],['3','architects handed it over'],['Top 5','acoustics in the world']],
+     tip:'Guided tours run almost daily — the way to see the hall without a ticket for a show.' } },
+ { id:'congreso', ll:[-34.60972,-58.39250], cat:'hist', foot:1.65, top:2.6, face:'E', on:['mayo'], year:'1906',
+   photo:{ f:'Congreso Nacional Buenos Aires.jpg', a:'Jacobo Tarrío', l:'CC BY 2.0' }, web:'https://www.congreso.gob.ar/',
+   es:{ name:'Congreso de la Nación', sub:'Palacio legislativo · Plaza del Congreso', yearl:'se inaugura',
+     desc:'El palacio grecorromano de Vittorio Meano cierra el eje cívico que empieza en la Casa Rosada. Su cúpula de bronce verdoso es una de las siluetas más reconocibles de la ciudad.',
+     stats:[['80 m','de alto con la cúpula'],['1,5 km','de Avenida de Mayo hasta la Rosada'],['Km 0','de las rutas, en la plaza']],
+     tip:'Parate junto al monolito del Km 0 y mirá por Avenida de Mayo: al fondo asoma la Casa Rosada.' },
+   en:{ name:'National Congress', sub:'Legislative palace · Plaza del Congreso', yearl:'inaugurated',
+     desc:'Vittorio Meano’s Greco-Roman palace closes the civic axis that starts at the Casa Rosada. Its green bronze dome is one of the city’s best-known silhouettes.',
+     stats:[['80 m','tall with the dome'],['1.5 km','of Av. de Mayo to the Casa Rosada'],['Km 0','of the national roads, in the square']],
+     tip:'Stand by the Km 0 marker and look down Av. de Mayo: the Casa Rosada sits at the far end.' } },
+ { id:'rosada', ll:[-34.60806,-58.37028], cat:'hist', foot:1.8, top:1.8, face:'W', on:['mayo','diagonal'], year:'1898',
+   photo:{ f:'Casa Rosada, Buenos Aires, Argentina.jpg', a:'Diego Delso', l:'CC BY-SA 3.0' }, web:'https://www.casarosada.gob.ar/',
+   es:{ name:'Casa Rosada', sub:'Casa de Gobierno · Plaza de Mayo', yearl:'el arco une los dos edificios',
+     desc:'La sede del Poder Ejecutivo mira a la Plaza de Mayo, el escenario de la historia argentina. Francesco Tamburini unió dos edificios con el gran arco central; enfrente, la Pirámide de Mayo y los pañuelos de las Madres pintados en el suelo.',
+     stats:[['1811','Pirámide de Mayo, el monumento patrio más antiguo'],['2','edificios unidos por el arco'],['Rosa','mezcla de rojo y blanco, según la tradición']],
+     tip:'Los fines de semana se puede recorrer por dentro gratis, reservando antes por la web.' },
+   en:{ name:'Casa Rosada', sub:'Government House · Plaza de Mayo', yearl:'the arch joins two buildings',
+     desc:'The seat of the Executive faces Plaza de Mayo, the stage of Argentine history. Francesco Tamburini joined two buildings with the great central arch; in front stand the Pirámide de Mayo and the Mothers’ headscarves painted on the ground.',
+     stats:[['1811','Pirámide de Mayo, the oldest national monument'],['2','buildings joined by the arch'],['Pink','a mix of red and white, tradition says']],
+     tip:'On weekends you can tour the inside for free — book ahead online.' } },
+ { id:'mujer', ll:[-34.60830,-58.36530], cat:'mod', foot:1.5, top:1.6, face:'E', on:[], year:'2001',
+   photo:{ f:'Buenos Aires Puente de la Mujer 1030985.jpg', a:'Ermell', l:'CC BY-SA 4.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/puente-de-la-mujer',
+   es:{ name:'Puente de la Mujer', sub:'Santiago Calatrava · Puerto Madero', yearl:'se inaugura',
+     desc:'Una pasarela blanca sobre el dique 3 que, dicen, dibuja una pareja bailando tango. El tramo central gira para que pasen los barcos, en un barrio donde todas las calles llevan nombres de mujeres.',
+     stats:[['39 m','de mástil'],['90°','gira para dejar pasar barcos'],['4','diques en Puerto Madero']],
+     tip:'Volvé de noche: el puente, los docks de ladrillo y las grúas se reflejan en el agua.' },
+   en:{ name:'Puente de la Mujer', sub:'Santiago Calatrava · Puerto Madero', yearl:'opens',
+     desc:'A white footbridge over Dock 3 that is said to sketch a couple dancing tango. The central span swings round to let boats through, in a district where every street is named after a woman.',
+     stats:[['39 m','mast'],['90°','swing to let boats pass'],['4','docks in Puerto Madero']],
+     tip:'Come back at night: the bridge, the brick docks and the cranes all reflect in the water.' } },
+ { id:'bombonera', ll:[-34.63556,-58.36472], cat:'dep', foot:1.6, top:1.3, face:'S', on:[], year:'1940',
+   photo:{ f:'La Bombonera 2.jpg', a:'Matibro', l:'CC BY-SA 4.0' }, web:'https://www.bocajuniors.com.ar/',
+   es:{ name:'La Bombonera', sub:'Estadio de Boca Juniors · La Boca', yearl:'se inaugura',
+     desc:'El estadio de Boca tiene tres tribunas curvas y un lado recto de palcos: no había más terreno, y salió esta "D" tan particular. Cuando salta la hinchada, dicen que la cancha late.',
+     stats:[['≈57.000','espectadores'],['3','tribunas curvas y una recta'],['Azul y oro','colores de un barco sueco']],
+     tip:'Aunque no haya partido, el museo del club hace visitas a la cancha.' },
+   en:{ name:'La Bombonera', sub:'Boca Juniors stadium · La Boca', yearl:'opens',
+     desc:'Boca’s ground has three curved stands and one straight side of boxes: the plot was too small, so it ended up with this unusual “D”. When the fans jump, they say the stadium beats like a heart.',
+     stats:[['≈57,000','spectators'],['3','curved stands and one straight'],['Blue & gold','borrowed from a Swedish ship']],
+     tip:'Even without a match, the club museum runs tours of the stadium.' } },
+ // "at": punto usado en la maqueta, del lado de La Boca (el real está justo sobre la orilla del Riachuelo)
+ { id:'caminito', ll:[-34.63930,-58.36260], at:[-34.6350,-58.3550], cat:'barrio', foot:1.45, top:1.0, face:'S', on:[], year:'1959',
+   photo:{ f:'Buenos Aires - La Boca - Caminito - 200807i.jpg', a:'Luis Argerich', l:'CC BY 2.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/caminito',
+   es:{ name:'Caminito', sub:'Calle museo · La Boca', yearl:'se vuelve calle museo',
+     desc:'Un pasaje de casas de chapa pintadas con los restos de pintura de los barcos, junto al Riachuelo. Benito Quinquela Martín lo convirtió en museo a cielo abierto y le puso el nombre de un tango.',
+     stats:[['≈100 m','de pasaje'],['1926','año del tango que le da nombre'],['Chapa','y pintura de los astilleros']],
+     tip:'Seguí unas cuadras hasta la Vuelta de Rocha y la Fundación Proa, frente al agua.' },
+   en:{ name:'Caminito', sub:'Street museum · La Boca', yearl:'becomes a street museum',
+     desc:'A lane of tin houses painted with paint left over from the ships, next to the Riachuelo. Artist Benito Quinquela Martín turned it into an open-air museum and named it after a tango.',
+     stats:[['≈100 m','long'],['1926','year of the tango it’s named after'],['Tin','and shipyard paint']],
+     tip:'Walk a few blocks on to the Vuelta de Rocha and Fundación Proa, right on the water.' } },
+ { id:'recoleta', ll:[-34.58750,-58.39306], cat:'mem', foot:1.6, top:1.0, face:'N', on:[], year:'1822',
+   photo:{ f:'Cementerio de la Recoleta.jpg', a:'Sking', l:'CC BY-SA 3.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/cementerio-de-la-recoleta',
+   es:{ name:'Cementerio de la Recoleta', sub:'Recoleta', yearl:'abre sus puertas',
+     desc:'Una ciudad en miniatura de calles, mausoleos, ángeles y cúpulas: el primer cementerio público de Buenos Aires. Acá descansan presidentes, escritores y Eva Perón.',
+     stats:[['≈4.700','bóvedas'],['94','monumentos históricos nacionales'],['5,5 ha','de calles y esculturas']],
+     tip:'La bóveda de la familia Duarte, donde está Evita, es la que siempre tiene flores frescas.' },
+   en:{ name:'Recoleta Cemetery', sub:'Recoleta', yearl:'opens its gates',
+     desc:'A miniature city of lanes, mausoleums, angels and domes — the first public cemetery in Buenos Aires. Presidents, writers and Eva Perón rest here.',
+     stats:[['≈4,700','vaults'],['94','national historic monuments'],['5.5 ha','of lanes and sculptures']],
+     tip:'The Duarte family vault, where Evita lies, is the one that always has fresh flowers.' } },
+ { id:'floralis', ll:[-34.58164,-58.39395], cat:'mod', foot:1.3, top:1.8, face:'S', on:[], year:'2002',
+   photo:{ f:'Floralis Genérica (27547134408).jpg', a:'Deensel', l:'CC BY 2.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/floralis-gen%C3%A9rica',
+   es:{ name:'Floralis Genérica', sub:'Eduardo Catalano · Plaza de las Naciones Unidas', yearl:'se instala',
+     desc:'Una flor gigante de acero sobre un espejo de agua. El arquitecto Eduardo Catalano la regaló a la ciudad y la pensó para abrirse con el día y cerrarse cuando cae el sol.',
+     stats:[['23 m','de altura'],['18 t','de acero y aluminio'],['6','pétalos móviles']],
+     tip:'Probá el modo noche de la maqueta: la flor también cierra sus pétalos.' },
+   en:{ name:'Floralis Genérica', sub:'Eduardo Catalano · United Nations Square', yearl:'installed',
+     desc:'A giant steel flower on a reflecting pool. Architect Eduardo Catalano gave it to the city and designed it to open with the day and close at sunset.',
+     stats:[['23 m','tall'],['18 t','of steel and aluminium'],['6','moving petals']],
+     tip:'Try night mode on the model: the flower closes its petals too.' } },
+ { id:'planetario', ll:[-34.56965,-58.41157], cat:'cult', foot:1.4, top:1.9, face:'S', on:[], year:'1966',
+   photo:{ f:'Planetario Galileo Galilei-capturemind.jpg', a:'Mariano Gilioli', l:'CC BY-SA 4.0' }, web:'https://planetario.buenosaires.gob.ar/',
+   es:{ name:'Planetario Galileo Galilei', sub:'Bosques de Palermo', yearl:'se inaugura',
+     desc:'Una esfera apoyada sobre tres patas en medio de los Bosques de Palermo, con pinta de nave recién aterrizada. Adentro, una cúpula de proyección; afuera, meteoritos de Campo del Cielo.',
+     stats:[['20 m','de diámetro de la cúpula'],['3','patas sostienen la esfera'],['Meteoritos','que se pueden tocar']],
+     tip:'De noche lo iluminan de colores. En la maqueta, el anillo también cambia de color.' },
+   en:{ name:'Galileo Galilei Planetarium', sub:'Palermo Woods', yearl:'opens',
+     desc:'A sphere resting on three legs in the middle of the Palermo Woods, like a spaceship that just touched down. Inside, a projection dome; outside, meteorites from Campo del Cielo.',
+     stats:[['20 m','dome diameter'],['3','legs hold the sphere'],['Meteorites','you can touch']],
+     tip:'At night it’s lit in colours — on the model, the ring changes colour too.' } },
+ { id:'cabildo', ll:[-34.60870,-58.37400], cat:'hist', foot:1.0, top:1.5, face:'E', on:[], year:'1810',
+   photo:{ f:'Cabildo de Buenos Aires 2023.jpg', a:'Fernando', l:'CC BY-SA 4.0' }, web:'https://cabildonacional.cultura.gob.ar/',
+   es:{ name:'Cabildo', sub:'Museo Histórico Nacional · Plaza de Mayo', yearl:'Revolución de Mayo',
+     desc:'El edificio colonial blanco de la Plaza de Mayo, con su recova de arcos y su torre. Acá funcionaba el gobierno de la ciudad y acá se gestó la Revolución de Mayo de 1810.',
+     stats:[['5 de 11','arcos sobrevivieron a las avenidas'],['1810','el primer gobierno patrio'],['Museo','de la historia de Mayo']],
+     tip:'Subí al balcón del primer piso: tiene la mejor vista de la Plaza de Mayo y la Casa Rosada.' },
+   en:{ name:'Cabildo', sub:'National History Museum · Plaza de Mayo', yearl:'May Revolution',
+     desc:'The white colonial building on Plaza de Mayo, with its arcade and tower. It housed the city government, and the May Revolution of 1810 was hatched here.',
+     stats:[['5 of 11','arches survived the avenues'],['1810','first home-grown government'],['Museum','of the May Revolution']],
+     tip:'Go up to the first-floor balcony: the best view of Plaza de Mayo and the Casa Rosada.' } },
+ { id:'catedral', ll:[-34.60750,-58.37300], cat:'hist', foot:1.1, top:1.9, face:'S', on:[], year:'1880',
+   photo:{ f:'Catedral Metropolitana - Buenos Aires.jpg', a:'The Cosmonaut', l:'CC BY-SA 2.5 ca' }, web:'https://catedralbuenosaires.org.ar/',
+   es:{ name:'Catedral Metropolitana', sub:'Plaza de Mayo', yearl:'llegan los restos de San Martín',
+     desc:'Por fuera parece un templo griego: doce columnas y un frontón, sin campanario a la vista. Adentro está el mausoleo del general San Martín, custodiado por los Granaderos, y fue la catedral del papa Francisco.',
+     stats:[['12','columnas, por los apóstoles'],['San Martín','descansa en su mausoleo'],['Granaderos','hacen guardia en la puerta del mausoleo']],
+     tip:'Si coincidís con el cambio de guardia de los Granaderos, quedate a verlo: es un ritual silencioso.' },
+   en:{ name:'Metropolitan Cathedral', sub:'Plaza de Mayo', yearl:'San Martín’s remains arrive',
+     desc:'From outside it looks like a Greek temple: twelve columns and a pediment, no bell tower in sight. Inside lies the mausoleum of General San Martín, guarded by Grenadiers — and it was Pope Francis’s cathedral.',
+     stats:[['12','columns, for the apostles'],['San Martín','rests in his mausoleum'],['Grenadiers','stand guard at the mausoleum']],
+     tip:'If you catch the Grenadiers’ changing of the guard, stay and watch: it is a silent ritual.' } },
+ { id:'barolo', ll:[-34.60940,-58.38580], cat:'icon', foot:.85, top:3.6, face:'N', on:[], year:'1923',
+   photo:{ f:'Palacio Barolo visto de frente.jpg', a:'EEJCC', l:'CC0' }, web:'https://palaciobarolo.com.ar/',
+   es:{ name:'Palacio Barolo', sub:'Mario Palanti · Avenida de Mayo', yearl:'se inaugura',
+     desc:'Un rascacielos pensado como la Divina Comedia: subsuelo infierno, pisos purgatorio y un faro en la cúpula como paraíso. Su gemelo, el Palacio Salvo, está del otro lado del río, en Montevideo.',
+     stats:[['100 m','como los 100 cantos de Dante'],['22','pisos'],['Faro','gemelo del Palacio Salvo']],
+     tip:'Las visitas guiadas, también de noche, suben hasta el faro de la cúpula.' },
+   en:{ name:'Palacio Barolo', sub:'Mario Palanti · Avenida de Mayo', yearl:'opens',
+     desc:'A skyscraper designed like the Divine Comedy: basement as hell, floors as purgatory and a lighthouse in the dome as paradise. Its twin, the Palacio Salvo, stands across the river in Montevideo.',
+     stats:[['100 m','like Dante’s 100 cantos'],['22','floors'],['Lighthouse','twin of the Palacio Salvo']],
+     tip:'Guided tours, including night ones, climb all the way to the lighthouse in the dome.' } },
+ // Tortoni va del lado sur de Av. de Mayo en la maqueta: del lado norte no entra entre la avenida y la Diagonal
+ { id:'tortoni', ll:[-34.60880,-58.37870], at:[-34.6097,-58.3787], cat:'cult', foot:.8, top:1.3, face:'N', on:[], year:'1858',
+   photo:{ f:'Café Tortoni 01.jpg', a:'Bernard Gagnon', l:'CC BY-SA 4.0' }, web:'https://www.cafetortoni.com.ar/',
+   es:{ name:'Café Tortoni', sub:'Café notable · Avenida de Mayo', yearl:'abre sus puertas',
+     desc:'El café más antiguo del país que sigue abierto. Mesas de mármol, vitrales y boiserie donde se sentaron Borges, Gardel y Alfonsina Storni; en el sótano hay tango casi todas las noches.',
+     stats:[['1858','abre sus puertas'],['+165','años sirviendo café'],['Tango','en el sótano']],
+     tip:'Pedí chocolate con churros y mirá el vitral del techo.' },
+   en:{ name:'Café Tortoni', sub:'Historic café · Avenida de Mayo', yearl:'opens',
+     desc:'The oldest café in the country still open. Marble tables, stained glass and wood panelling where Borges, Gardel and Alfonsina Storni sat; there is tango in the basement most nights.',
+     stats:[['1858','opens its doors'],['165+','years of coffee'],['Tango','in the basement']],
+     tip:'Order hot chocolate with churros and look up at the stained-glass ceiling.' } },
+ { id:'galerias', ll:[-34.59900,-58.37470], cat:'cult', foot:1.2, top:1.5, face:'E', on:[], year:'1891',
+   photo:{ f:'Buenos Aires - Galerías Pacífico.jpg', a:'Rodrigo Galindez', l:'CC BY 2.0' }, web:'https://www.galeriaspacifico.com.ar/',
+   es:{ name:'Galerías Pacífico', sub:'Calle Florida', yearl:'nace como Bon Marché',
+     desc:'Un palacio comercial de estilo parisino sobre la peatonal Florida. Debajo de su cúpula central hay murales enormes pintados por cinco artistas argentinos, entre ellos Berni y Spilimbergo.',
+     stats:[['5','muralistas en la cúpula'],['1891','se construye'],['Florida','la peatonal de compras']],
+     tip:'Aunque no compres nada, entrá y mirá para arriba: la cúpula es un museo gratis.' },
+   en:{ name:'Galerías Pacífico', sub:'Florida Street', yearl:'built as Bon Marché',
+     desc:'A Parisian-style shopping palace on pedestrian Florida Street. Under its central dome are huge murals painted by five Argentine artists, among them Berni and Spilimbergo.',
+     stats:[['5','muralists in the dome'],['1891','built'],['Florida','the shopping street']],
+     tip:'Even if you buy nothing, step in and look up: the dome is a free museum.' } },
+ { id:'kavanagh', ll:[-34.59470,-58.37460], cat:'icon', foot:.85, top:3.4, face:'E', on:[], year:'1936',
+   photo:{ f:'Kavanagh building.jpg', a:'Marcos Prack', l:'CC BY 2.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/edificio-kavanagh',
+   es:{ name:'Edificio Kavanagh', sub:'Plaza San Martín · Retiro', yearl:'se termina',
+     desc:'Una proa de hormigón art déco frente a la Plaza San Martín. Cuando se terminó era el edificio de hormigón armado más alto del mundo, y la leyenda dice que se hizo para tapar la vista a una iglesia vecina.',
+     stats:[['120 m','de altura'],['1936','récord mundial en hormigón'],['Leyenda','tapar la iglesia de los Anchorena']],
+     tip:'Mirá desde la Plaza San Martín hacia la calle San Martín: el edificio deja ver solo un pedacito de la iglesia.' },
+   en:{ name:'Kavanagh Building', sub:'Plaza San Martín · Retiro', yearl:'completed',
+     desc:'An Art Deco concrete prow facing Plaza San Martín. When finished it was the tallest reinforced-concrete building in the world, and legend says it was built to block a neighbouring church from view.',
+     stats:[['120 m','tall'],['1936','world concrete record'],['Legend','hiding the Anchorena church']],
+     tip:'From Plaza San Martín, look down San Martín street: the building lets only a sliver of the church show.' } },
+ { id:'torre', ll:[-34.59250,-58.37450], cat:'hist', foot:.8, top:2.5, face:'N', on:['libertador'], year:'1916',
+   photo:{ f:'HotelSheratonyTorreMonumentalBsAs-jul2016 (edit by C messier).jpg', a:'ezarate, edited by C messier', l:'CC BY-SA 4.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/torre-monumental',
+   es:{ name:'Torre Monumental', sub:'Plaza Fuerza Aérea · Retiro', yearl:'se inaugura',
+     desc:'La torre del reloj de ladrillo que la comunidad británica regaló por el Centenario. Durante décadas fue la Torre de los Ingleses, hasta que tras la guerra de Malvinas cambió de nombre.',
+     stats:[['1916','se inaugura'],['1982','deja de ser "de los Ingleses"'],['Mirador','con vista al río y a Retiro']],
+     tip:'Desde el mirador se ven juntas la estación Retiro, el puerto y el Kavanagh.' },
+   en:{ name:'Torre Monumental', sub:'Plaza Fuerza Aérea · Retiro', yearl:'opens',
+     desc:'The brick clock tower the British community gave the city for the Centenary. For decades it was the “Tower of the English”, until it was renamed after the Falklands/Malvinas war.',
+     stats:[['1916','opens'],['1982','stops being “of the English”'],['Lookout','over the river and Retiro']],
+     tip:'From the lookout you see Retiro station, the port and the Kavanagh all together.' } },
+ { id:'mercado', ll:[-34.62080,-58.37200], cat:'barrio', foot:1.05, top:.9, face:'N', on:[], year:'1897',
+   photo:{ f:'Mercado de San Telmo 2025 02.jpg', a:'ProtoplasmaKid', l:'CC BY-SA 4.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/mercado-de-san-telmo',
+   es:{ name:'Mercado de San Telmo', sub:'San Telmo', yearl:'abre el mercado',
+     desc:'Una nave de hierro y vidrio de Juan Antonio Buschiazzo donde conviven verdulerías de toda la vida, antigüedades y cafés de especialidad. Es el corazón del barrio más antiguo de la ciudad.',
+     stats:[['1897','abre el mercado'],['Hierro','y vidrio en la nave central'],['Domingos','feria de antigüedades en Defensa']],
+     tip:'Andá un domingo y seguí por Defensa hasta Plaza Dorrego: la feria se llena de música.' },
+   en:{ name:'San Telmo Market', sub:'San Telmo', yearl:'opens',
+     desc:'An iron-and-glass hall by Juan Antonio Buschiazzo where old-school greengrocers share space with antiques and specialty coffee. It is the heart of the city’s oldest neighbourhood.',
+     stats:[['1897','opens'],['Iron','and glass main hall'],['Sundays','antiques fair on Defensa']],
+     tip:'Go on a Sunday and walk up Defensa to Plaza Dorrego: the fair fills with music.' } },
+ { id:'usina', ll:[-34.62840,-58.35670], cat:'cult', foot:1.1, top:2.3, face:'W', on:[], year:'1916',
+   photo:{ f:'Usina del Arte en La Noche de los Museos 2022.jpg', a:'Mauro Alfieri', l:'CC BY-SA 2.5' }, web:'https://usinadelarte.org/',
+   es:{ name:'Usina del Arte', sub:'La Boca', yearl:'funciona como usina eléctrica',
+     desc:'Una antigua usina eléctrica de ladrillo con aire de palacio florentino y una torre con reloj. Hoy es un centro cultural con una sala sinfónica de muy buena acústica.',
+     stats:[['1916','daba luz a la ciudad'],['2012','renace como centro cultural'],['≈1.200','butacas en la sala sinfónica']],
+     tip:'Muchos conciertos son gratuitos: revisá la agenda y reservá la entrada antes.' },
+   en:{ name:'Usina del Arte', sub:'La Boca', yearl:'powering the city',
+     desc:'An old brick power station that looks like a Florentine palace, with a clock tower. Today it is an arts centre with a symphony hall known for its acoustics.',
+     stats:[['1916','powered the city'],['2012','reborn as an arts centre'],['≈1,200','seats in the symphony hall']],
+     tip:'Many concerts are free: check the schedule and book ahead.' } },
+ { id:'aguas', ll:[-34.60000,-58.39700], cat:'icon', foot:1.25, top:1.6, face:'N', on:[], year:'1894',
+   photo:{ f:'Palacio de Aguas Corrientes, Buenos Aires - 08.jpg', a:'Sergio Moises Panei Pitrau', l:'CC BY 4.0' }, web:'https://turismo.buenosaires.gob.ar/es/atractivo/palacio-de-aguas-corrientes',
+   es:{ name:'Palacio de Aguas Corrientes', sub:'Avenida Córdoba · Balvanera', yearl:'se inaugura',
+     desc:'Parece un palacio de cuento, pero adentro escondía tanques gigantes que abastecían de agua a la ciudad. Su fachada está hecha de miles de piezas de cerámica traídas de Inglaterra.',
+     stats:[['≈300.000','piezas de cerámica y ladrillo esmaltado'],['12','tanques de agua escondidos'],['Museo','del Agua y de la Historia Sanitaria']],
+     tip:'Mirá los escudos de las provincias en la fachada: cada uno es de cerámica.' },
+   en:{ name:'Palacio de Aguas Corrientes', sub:'Avenida Córdoba · Balvanera', yearl:'opens',
+     desc:'It looks like a fairy-tale palace, but inside it hid giant tanks that supplied the city’s water. Its façade is made of thousands of ceramic pieces shipped from England.',
+     stats:[['≈300,000','ceramic pieces and glazed bricks'],['12','hidden water tanks'],['Museum','of water and sanitation']],
+     tip:'Look for the provinces’ coats of arms on the façade — each one is ceramic.' } },
+ { id:'biblioteca', ll:[-34.58430,-58.39860], cat:'cult', foot:1.15, top:1.7, face:'N', on:[], year:'1992',
+   photo:{ f:'Biblioteca Nacional "Mariano Moreno".jpg', a:'Gaboto2018', l:'CC BY-SA 4.0' }, web:'https://www.bn.gov.ar/',
+   es:{ name:'Biblioteca Nacional', sub:'Clorindo Testa · Recoleta', yearl:'se inaugura',
+     desc:'Una mole de hormigón brutalista que flota sobre cuatro grandes pilares, rodeada de parque. El proyecto ganó el concurso en 1962 y tardó 30 años en inaugurarse. Borges dirigió la Biblioteca en su antigua sede.',
+     stats:[['30','años entre el proyecto y la inauguración'],['4','pilares sostienen la sala de lectura'],['Borges','fue su director']],
+     tip:'La sala de lectura del último piso tiene una de las mejores vistas al río.' },
+   en:{ name:'National Library', sub:'Clorindo Testa · Recoleta', yearl:'opens',
+     desc:'A brutalist concrete mass floating on four huge pillars in a park. The design won its competition in 1962 and took 30 years to open. Borges ran the Library in its old home.',
+     stats:[['30','years from design to opening'],['4','pillars hold up the reading room'],['Borges','was its director']],
+     tip:'The top-floor reading room has one of the best views of the river.' } },
+ { id:'derecho', ll:[-34.58300,-58.39200], cat:'cult', foot:1.3, top:1.2, face:'N', on:[], year:'1949',
+   photo:{ f:'Facultad de Derecho UBA (2014).jpg', a:'Lars Curfs (Grashoofd)', l:'CC BY-SA 3.0 nl' }, web:'https://www.derecho.uba.ar/',
+   es:{ name:'Facultad de Derecho', sub:'Universidad de Buenos Aires · Recoleta', yearl:'se inaugura',
+     desc:'Un templo de granito gris con una fila de columnas monumentales y una escalinata enorme frente a la avenida Figueroa Alcorta. Es pública y gratuita, como toda la UBA.',
+     stats:[['UBA','universidad pública y gratuita'],['1949','se inaugura el edificio'],['Floralis','la flor de acero está enfrente']],
+     tip:'La escalinata es un mirador perfecto para ver abrirse la Floralis Genérica.' },
+   en:{ name:'Law School', sub:'University of Buenos Aires · Recoleta', yearl:'opens',
+     desc:'A grey granite temple with a row of monumental columns and a huge flight of steps facing Figueroa Alcorta avenue. It is public and free, like the whole UBA.',
+     stats:[['UBA','public and free university'],['1949','building opens'],['Floralis','the steel flower is across the street']],
+     tip:'The steps are a perfect spot to watch the Floralis Genérica open.' } },
+ { id:'malba', ll:[-34.57700,-58.40350], cat:'cult', foot:1.0, top:1.0, face:'N', on:[], year:'2001',
+   photo:{ f:'MALBA, Buenos Aires, Argentina.jpg', a:'OneEuropeanHeart', l:'CC BY 3.0' }, web:'https://www.malba.org.ar/',
+   es:{ name:'MALBA', sub:'Museo de Arte Latinoamericano · Palermo', yearl:'abre sus puertas',
+     desc:'Un edificio contemporáneo de piedra clara y vidrio dedicado al arte latinoamericano. Su joya es el Abaporu de Tarsila do Amaral, y también tiene obras de Frida Kahlo, Xul Solar y Berni.',
+     stats:[['2001','abre sus puertas'],['Abaporu','de Tarsila do Amaral'],['Siglo XX','y XXI latinoamericano']],
+     tip:'Después de la visita, cruzá la avenida y seguí caminando hasta los Bosques de Palermo.' },
+   en:{ name:'MALBA', sub:'Latin American Art Museum · Palermo', yearl:'opens',
+     desc:'A contemporary building of pale stone and glass devoted to Latin American art. Its jewel is Tarsila do Amaral’s Abaporu, alongside works by Frida Kahlo, Xul Solar and Berni.',
+     stats:[['2001','opens'],['Abaporu','by Tarsila do Amaral'],['20th–21st c.','Latin American art']],
+     tip:'After your visit, cross the avenue and walk on to the Palermo Woods.' } },
+ { id:'japones', ll:[-34.57720,-58.40960], cat:'nat', foot:1.25, top:1.0, face:'S', on:[], year:'1967',
+   photo:{ f:'Buenos Aires - Jardín Japonés - 200806a.jpg', a:'Luis Argerich', l:'CC BY 2.0' }, web:'https://jardinjapones.org.ar/',
+   es:{ name:'Jardín Japonés', sub:'Palermo', yearl:'se inaugura',
+     desc:'Un jardín de estanques con carpas koi, puentes rojos y faroles de piedra en medio de Palermo. Lo regaló la comunidad japonesa por la visita del príncipe Akihito.',
+     stats:[['1967','visita de Akihito'],['Koi','carpas en el lago'],['Rojo','el puente curvo del lago']],
+     tip:'Comprá alimento para las carpas en la entrada: se acercan en bandada al puente.' },
+   en:{ name:'Japanese Garden', sub:'Palermo', yearl:'opens',
+     desc:'A garden of ponds with koi carp, red bridges and stone lanterns in the middle of Palermo. The Japanese community gave it for Prince Akihito’s visit.',
+     stats:[['1967','Akihito’s visit'],['Koi','carp in the lake'],['Red','the arched bridge']],
+     tip:'Buy fish food at the entrance: the koi crowd around the bridge.' } },
+ { id:'monumental', ll:[-34.54530,-58.44980], cat:'dep', foot:1.7, top:1.0, face:'S', on:[], year:'1938',
+   photo:{ f:'Estadio Monumental (River Plate), Buenos Aires ARG.jpg', a:'Stefano Vigorelli', l:'CC BY-SA 4.0' }, web:'https://www.cariverplate.com.ar/',
+   es:{ name:'Estadio Monumental', sub:'River Plate · Núñez', yearl:'se inaugura',
+     desc:'La cancha de River y el estadio más grande de Sudamérica. Fue sede de la final del Mundial 1978 y es la casa de la Selección argentina.',
+     stats:[['≈85.000','espectadores'],['1978','final del Mundial'],['Banda','roja de la camiseta']],
+     tip:'El museo del club organiza visitas al estadio, con vestuarios incluidos.' },
+   en:{ name:'Monumental Stadium', sub:'River Plate · Núñez', yearl:'opens',
+     desc:'River Plate’s ground and the largest stadium in South America. It hosted the 1978 World Cup final and is home to Argentina’s national team.',
+     stats:[['≈85,000','spectators'],['1978','World Cup final'],['Sash','the red band of the shirt']],
+     tip:'The club museum runs stadium tours, changing rooms included.' } },
+];
+// Portugués: muchos visitantes de Buenos Aires vienen de Brasil
+const PT = {
+ obelisco:{ name:'Obelisco', sub:'Plaza de la República · 9 de Julio e Corrientes', yearl:'inaugurado',
+   desc:'O ponto de encontro da cidade: aqui se comemoram as Copas do Mundo, na avenida mais larga de Buenos Aires. Alberto Prebisch o projetou para os 400 anos da primeira fundação, no lugar onde a bandeira foi hasteada pela primeira vez na cidade.',
+   stats:[['67,5 m','de altura'],['31','dias de obra'],['206','degraus até a janelinha']], tip:'A foto clássica é do canteiro central da 9 de Julio, olhando pela Corrientes ao entardecer.' },
+ colon:{ name:'Teatro Colón', sub:'Ópera · Plaza Lavalle', yearl:'abre com Aida',
+   desc:'Uma das grandes casas de ópera do mundo, famosa pela acústica quase perfeita. Três arquitetos (Tamburini, Meano e Dormal) se revezaram na obra até a inauguração, num 25 de maio.',
+   stats:[['≈2.500','poltronas na sala'],['3','arquitetos se revezaram'],['Top 5','acústicas do mundo']], tip:'Há visitas guiadas quase todos os dias: é o jeito de ver a sala sem ingresso para um espetáculo.' },
+ tortoni:{ name:'Café Tortoni', sub:'Café histórico · Avenida de Mayo', yearl:'abre as portas',
+   desc:'O café mais antigo do país ainda em funcionamento. Mesas de mármore, vitrais e madeira onde se sentaram Borges, Gardel e Alfonsina Storni; no porão há tango quase todas as noites.',
+   stats:[['1858','abre as portas'],['+165','anos servindo café'],['Tango','no porão']], tip:'Peça chocolate quente com churros e olhe o vitral do teto.' },
+ barolo:{ name:'Palacio Barolo', sub:'Mario Palanti · Avenida de Mayo', yearl:'inaugurado',
+   desc:'Um arranha-céu pensado como a Divina Comédia: subsolo inferno, andares purgatório e um farol na cúpula como paraíso. Seu gêmeo, o Palacio Salvo, fica do outro lado do rio, em Montevidéu.',
+   stats:[['100 m','como os 100 cantos de Dante'],['22','andares'],['Farol','gêmeo do Palacio Salvo']], tip:'As visitas guiadas, também à noite, sobem até o farol da cúpula.' },
+ congreso:{ name:'Congresso Nacional', sub:'Palácio legislativo · Plaza del Congreso', yearl:'inaugurado',
+   desc:'O palácio greco-romano de Vittorio Meano fecha o eixo cívico que começa na Casa Rosada. Sua cúpula de bronze esverdeado é uma das silhuetas mais conhecidas da cidade.',
+   stats:[['80 m','de altura com a cúpula'],['1,5 km','de Av. de Mayo até a Casa Rosada'],['Km 0','das rodovias, na praça']], tip:'Fique junto ao marco do Km 0 e olhe pela Avenida de Mayo: no fundo aparece a Casa Rosada.' },
+ cabildo:{ name:'Cabildo', sub:'Museu Histórico Nacional · Plaza de Mayo', yearl:'Revolução de Maio',
+   desc:'O prédio colonial branco da Plaza de Mayo, com sua galeria de arcos e sua torre. Aqui funcionava o governo da cidade e aqui nasceu a Revolução de Maio de 1810.',
+   stats:[['5 de 11','arcos sobreviveram às avenidas'],['1810','o primeiro governo pátrio'],['Museu','da Revolução de Maio']], tip:'Suba à sacada do primeiro andar: tem a melhor vista da Plaza de Mayo e da Casa Rosada.' },
+ catedral:{ name:'Catedral Metropolitana', sub:'Plaza de Mayo', yearl:'chegam os restos de San Martín',
+   desc:'Por fora parece um templo grego: doze colunas e um frontão, sem campanário à vista. Dentro fica o mausoléu do general San Martín, guardado pelos Granaderos, e foi a catedral do papa Francisco.',
+   stats:[['12','colunas, pelos apóstolos'],['San Martín','descansa no mausoléu'],['Granaderos','montam guarda no mausoléu']], tip:'Se você coincidir com a troca da guarda dos Granaderos, fique para ver: é um ritual silencioso.' },
+ rosada:{ name:'Casa Rosada', sub:'Sede do governo · Plaza de Mayo', yearl:'o arco une os dois prédios',
+   desc:'A sede do Poder Executivo olha para a Plaza de Mayo, o palco da história argentina. Francesco Tamburini uniu dois prédios com o grande arco central; em frente ficam a Pirámide de Mayo e os lenços das Mães pintados no chão.',
+   stats:[['1811','Pirámide de Mayo, o monumento pátrio mais antigo'],['2','prédios unidos pelo arco'],['Rosa','mistura de vermelho e branco, diz a tradição']], tip:'Nos fins de semana dá para visitar por dentro de graça, reservando antes pela internet.' },
+ mujer:{ name:'Puente de la Mujer', sub:'Santiago Calatrava · Puerto Madero', yearl:'inaugurada',
+   desc:'Uma passarela branca sobre o dique 3 que, dizem, desenha um casal dançando tango. O trecho central gira para os barcos passarem, num bairro onde todas as ruas têm nomes de mulheres.',
+   stats:[['39 m','de mastro'],['90°','gira para os barcos passarem'],['4','diques em Puerto Madero']], tip:'Volte à noite: a ponte, os galpões de tijolo e os guindastes se refletem na água.' },
+ mercado:{ name:'Mercado de San Telmo', sub:'San Telmo', yearl:'abre o mercado',
+   desc:'Uma nave de ferro e vidro de Juan Antonio Buschiazzo onde convivem quitandas de sempre, antiguidades e cafés especiais. É o coração do bairro mais antigo da cidade.',
+   stats:[['1897','abre o mercado'],['Ferro','e vidro na nave central'],['Domingos','feira de antiguidades na Defensa']], tip:'Vá num domingo e siga pela Defensa até a Plaza Dorrego: a feira se enche de música.' },
+ usina:{ name:'Usina del Arte', sub:'La Boca', yearl:'funciona como usina elétrica',
+   desc:'Uma antiga usina elétrica de tijolo com ar de palácio florentino e uma torre com relógio. Hoje é um centro cultural com uma sala sinfônica de ótima acústica.',
+   stats:[['1916','iluminava a cidade'],['2012','renasce como centro cultural'],['≈1.200','lugares na sala sinfônica']], tip:'Muitos concertos são gratuitos: confira a agenda e reserve antes.' },
+ bombonera:{ name:'La Bombonera', sub:'Estádio do Boca Juniors · La Boca', yearl:'inaugurado',
+   desc:'O estádio do Boca tem três arquibancadas curvas e um lado reto de camarotes: o terreno era pequeno e saiu esse "D" tão especial. Quando a torcida pula, dizem que o estádio pulsa.',
+   stats:[['≈57.000','espectadores'],['3','arquibancadas curvas e uma reta'],['Azul e ouro','cores de um navio sueco']], tip:'Mesmo sem jogo, o museu do clube faz visitas ao estádio.' },
+ caminito:{ name:'Caminito', sub:'Rua museu · La Boca', yearl:'vira rua museu',
+   desc:'Uma passagem de casas de chapa pintadas com sobras de tinta dos navios, junto ao Riachuelo. O artista Benito Quinquela Martín a transformou em museu a céu aberto e lhe deu o nome de um tango.',
+   stats:[['≈100 m','de passagem'],['1926','ano do tango que lhe dá nome'],['Chapa','e tinta dos estaleiros']], tip:'Caminhe alguns quarteirões até a Vuelta de Rocha e a Fundación Proa, de frente para a água.' },
+ galerias:{ name:'Galerías Pacífico', sub:'Rua Florida', yearl:'nasce como Bon Marché',
+   desc:'Um palácio comercial de estilo parisiense na rua de pedestres Florida. Sob a cúpula central há murais enormes pintados por cinco artistas argentinos, entre eles Berni e Spilimbergo.',
+   stats:[['5','muralistas na cúpula'],['1891','construído'],['Florida','a rua de compras']], tip:'Mesmo sem comprar nada, entre e olhe para cima: a cúpula é um museu grátis.' },
+ kavanagh:{ name:'Edifício Kavanagh', sub:'Plaza San Martín · Retiro', yearl:'concluído',
+   desc:'Uma proa de concreto art déco diante da Plaza San Martín. Quando ficou pronto era o prédio de concreto armado mais alto do mundo, e a lenda diz que foi feito para tapar a vista de uma igreja vizinha.',
+   stats:[['120 m','de altura'],['1936','recorde mundial em concreto'],['Lenda','tapar a igreja dos Anchorena']], tip:'Da Plaza San Martín, olhe pela rua San Martín: o prédio deixa ver só um pedacinho da igreja.' },
+ torre:{ name:'Torre Monumental', sub:'Plaza Fuerza Aérea · Retiro', yearl:'inaugurada',
+   desc:'A torre do relógio de tijolo que a comunidade britânica deu à cidade pelo Centenário. Por décadas foi a "Torre dos Ingleses", até mudar de nome depois da guerra das Malvinas.',
+   stats:[['1916','inaugurada'],['1982','deixa de ser "dos Ingleses"'],['Mirante','com vista para o rio e Retiro']], tip:'Do mirante se veem juntos a estação Retiro, o porto e o Kavanagh.' },
+ aguas:{ name:'Palacio de Aguas Corrientes', sub:'Avenida Córdoba · Balvanera', yearl:'inaugurado',
+   desc:'Parece um palácio de conto de fadas, mas por dentro escondia tanques gigantes que abasteciam a cidade de água. Sua fachada é feita de milhares de peças de cerâmica trazidas da Inglaterra.',
+   stats:[['≈300.000','peças de cerâmica e tijolo esmaltado'],['12','tanques de água escondidos'],['Museu','da água e do saneamento']], tip:'Procure os brasões das províncias na fachada: cada um é de cerâmica.' },
+ recoleta:{ name:'Cemitério da Recoleta', sub:'Recoleta', yearl:'abre os portões',
+   desc:'Uma cidade em miniatura de ruas, mausoléus, anjos e cúpulas: o primeiro cemitério público de Buenos Aires. Aqui descansam presidentes, escritores e Eva Perón.',
+   stats:[['≈4.700','jazigos'],['94','monumentos históricos nacionais'],['5,5 ha','de ruas e esculturas']], tip:'O jazigo da família Duarte, onde está Evita, é o que sempre tem flores frescas.' },
+ biblioteca:{ name:'Biblioteca Nacional', sub:'Clorindo Testa · Recoleta', yearl:'inaugurada',
+   desc:'Uma massa de concreto brutalista que flutua sobre quatro grandes pilares, cercada de parque. O projeto venceu o concurso em 1962 e levou 30 anos para ser inaugurado. Borges dirigiu a Biblioteca na sede antiga.',
+   stats:[['30','anos entre o projeto e a inauguração'],['4','pilares sustentam a sala de leitura'],['Borges','foi seu diretor']], tip:'A sala de leitura do último andar tem uma das melhores vistas do rio.' },
+ derecho:{ name:'Faculdade de Direito', sub:'Universidade de Buenos Aires · Recoleta', yearl:'inaugurada',
+   desc:'Um templo de granito cinza com uma fila de colunas monumentais e uma escadaria enorme diante da avenida Figueroa Alcorta. É pública e gratuita, como toda a UBA.',
+   stats:[['UBA','universidade pública e gratuita'],['1949','o prédio é inaugurado'],['Floralis','a flor de aço fica em frente']], tip:'A escadaria é um mirante perfeito para ver a Floralis Genérica se abrir.' },
+ floralis:{ name:'Floralis Genérica', sub:'Eduardo Catalano · Plaza de las Naciones Unidas', yearl:'instalada',
+   desc:'Uma flor gigante de aço sobre um espelho d’água. O arquiteto Eduardo Catalano a deu de presente à cidade e a pensou para abrir com o dia e fechar quando o sol se põe.',
+   stats:[['23 m','de altura'],['18 t','de aço e alumínio'],['6','pétalas móveis']], tip:'Experimente o modo noite da maquete: a flor também fecha as pétalas.' },
+ malba:{ name:'MALBA', sub:'Museu de Arte Latino-Americana · Palermo', yearl:'abre as portas',
+   desc:'Um prédio contemporâneo de pedra clara e vidro dedicado à arte latino-americana. Sua joia é o Abaporu de Tarsila do Amaral, ao lado de obras de Frida Kahlo, Xul Solar e Berni.',
+   stats:[['2001','abre as portas'],['Abaporu','de Tarsila do Amaral'],['Séc. XX','e XXI latino-americanos']], tip:'Depois da visita, atravesse a avenida e siga caminhando até os Bosques de Palermo.' },
+ japones:{ name:'Jardim Japonês', sub:'Palermo', yearl:'inaugurado',
+   desc:'Um jardim de lagos com carpas koi, pontes vermelhas e lanternas de pedra no meio de Palermo. A comunidade japonesa o doou pela visita do príncipe Akihito.',
+   stats:[['1967','visita de Akihito'],['Koi','carpas no lago'],['Vermelha','a ponte curva do lago']], tip:'Compre ração para as carpas na entrada: elas se juntam perto da ponte.' },
+ planetario:{ name:'Planetário Galileo Galilei', sub:'Bosques de Palermo', yearl:'inaugurado',
+   desc:'Uma esfera apoiada em três pernas no meio dos Bosques de Palermo, com cara de nave recém-pousada. Dentro, uma cúpula de projeção; fora, meteoritos de Campo del Cielo.',
+   stats:[['20 m','de diâmetro da cúpula'],['3','pernas sustentam a esfera'],['Meteoritos','que dá para tocar']], tip:'À noite ele é iluminado em cores — na maquete, o anel também muda de cor.' },
+ monumental:{ name:'Estádio Monumental', sub:'River Plate · Núñez', yearl:'inaugurado',
+   desc:'O estádio do River Plate e o maior da América do Sul. Foi sede da final da Copa do Mundo de 1978 e é a casa da seleção argentina.',
+   stats:[['≈85.000','espectadores'],['1978','final da Copa do Mundo'],['Faixa','vermelha da camisa']], tip:'O museu do clube organiza visitas ao estádio, com vestiários incluídos.' },
+};
+for(const p of PLACES) p.pt = PT[p.id];
+const SUBTE_PT = { A:'a primeira da América Latina', B:'passa sob a avenida Corrientes', C:'liga os dois grandes terminais de trem', D:'segue para o norte por Recoleta e Palermo', E:'vai para o sudoeste', H:'a mais nova, de norte a sul' };
+for(const L of SUBTE) L.pt = SUBTE_PT[L.id];
+// Orden del recorrido: del centro hacia el sur y después hacia el norte
+const ORDER = ['obelisco','colon','tortoni','barolo','congreso','cabildo','catedral','rosada','mujer','mercado','usina','bombonera','caminito','galerias','kavanagh','torre','aguas','recoleta','biblioteca','derecho','floralis','malba','japones','planetario','monumental'];
+PLACES.sort((a,b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+const YAW = { S:0, E:Math.PI/2, N:Math.PI, W:-Math.PI/2 };
+for(const p of PLACES){ const [x,y] = llToP(...(p.at || p.ll)); p.p0 = [x,y]; p.P = [x,y]; }
+
+/* ---------- Avenidas y Riachuelo en espacio P ---------- */
+for(const r of ROADS) r.P = densifyP(r.ll,.05);
+
+/* ---------- Acomodar los lugares: que no se pisen ni caigan en una avenida o en el agua ---------- */
+(function relax(){
+  for(let it=0; it<320; it++){
+    const spring = it < 220 ? .03 : 0;
+    for(let i=0;i<PLACES.length;i++) for(let j=i+1;j<PLACES.length;j++){
+      const a = PLACES[i], b = PLACES[j]; let dx = b.P[0]-a.P[0], dy = b.P[1]-a.P[1]; const d = Math.hypot(dx,dy)*U || 1e-6, need = a.foot+b.foot+.35;
+      if(d < need){ const k = (need-d)/2/U*.8; dx /= d/U; dy /= d/U; a.P[0] -= dx*k; a.P[1] -= dy*k; b.P[0] += dx*k; b.P[1] += dy*k; }
+    }
+    for(const p of PLACES){
+      const lines = ROADS.filter(r => !p.on.includes(r.id)).map(r => [r.id, r.P, r.w/2+.18]); lines.push(['riach', RIACH, .45]);
+      if(!p.sides){ p.sides = {}; for(const [id,pts] of lines){ const {i} = polyDist(pts,p.p0[0],p.p0[1]), a = pts[i], b = pts[i+1];
+        p.sides[id] = Math.sign(-(b[1]-a[1])*(p.p0[0]-a[0]) + (b[0]-a[0])*(p.p0[1]-a[1])) || 1; } }   // lado original, antes de mover nada
+      for(const [id,pts,hw] of lines){
+        const {d,i} = polyDist(pts,p.P[0],p.P[1]), need = (p.foot+hw)/U, a = pts[i], b = pts[i+1];
+        let nx = -(b[1]-a[1]), ny = b[0]-a[0]; const l = Math.hypot(nx,ny); nx /= l; ny /= l;
+        const now = Math.sign((p.P[0]-a[0])*nx + (p.P[1]-a[1])*ny) || 1;
+        p.sides[id] ??= now;                                   // cada lugar se queda del lado de la avenida o del río donde empezó
+        const side = p.sides[id], gap = now === side ? need-d : need+d;
+        if(gap > 0){ p.P[0] += nx*side*gap; p.P[1] += ny*side*gap; }   // restricción dura: nunca cruza
+      }
+      const sd = coastSD(p.P[0],p.P[1]), need = (p.foot+.4)/U;
+      if(sd > -need){ const e = .05, gx = coastSD(p.P[0]+e,p.P[1])-coastSD(p.P[0]-e,p.P[1]), gy = coastSD(p.P[0],p.P[1]+e)-coastSD(p.P[0],p.P[1]-e), l = Math.hypot(gx,gy)||1;
+        p.P[0] -= gx/l*(sd+need)*.6; p.P[1] -= gy/l*(sd+need)*.6; }
+      p.P[0] += (p.p0[0]-p.P[0])*spring; p.P[1] += (p.p0[1]-p.P[1])*spring;
+    }
+  }
+})();
+const placeDistU = (p,px,py) => Math.hypot(px-p.P[0],py-p.P[1])*U;
+
+// Las avenidas se cortan donde un lugar está "sobre" ellas (el Obelisco en la 9 de Julio) y donde llegan al agua
+for(const r of ROADS){
+  const owners = PLACES.filter(p => p.on.includes(r.id)); r.pieces = []; let cur = [];
+  for(const q of r.P){
+    const blocked = owners.some(p => placeDistU(p,q[0],q[1]) < p.foot*.92) || coastSD(q[0],q[1]) > -.6/U;
+    if(blocked){ if(cur.length > 3) r.pieces.push(cur); cur = []; } else cur.push(q);
+  }
+  if(cur.length > 3) r.pieces.push(cur);
+}
+const RIACH_DRAW = RIACH.filter(q => coastSD(q[0],q[1]) < .4/U);
+
+/* ==========================================================================
+   Escena
+   ========================================================================== */
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, preserveDrawingBuffer: new URLSearchParams(location.search).has('debug') });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+const ENV = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environment = ENV;
+const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, .1, 500);
+const world = new THREE.Group(); scene.add(world);
+
+const SUN_DIR = V3(-.32,.34,.88).normalize();   // el sol de Buenos Aires viene del norte
+const hemi = new THREE.HemisphereLight('#eef5ff','#b8a888',.55); scene.add(hemi);
+const sun = new THREE.DirectionalLight('#fff1dc',2.3);
+sun.position.copy(SUN_DIR).multiplyScalar(60); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{ left:-21, right:21, top:21, bottom:-21, near:30, far:95 });
+sun.shadow.bias = -.0004; sun.shadow.normalBias = .025; scene.add(sun, sun.target);
+const moon = new THREE.DirectionalLight('#8ea8ff',0); moon.position.set(.5,.3,1).multiplyScalar(60); scene.add(moon);
+
+const mats = {};
+function M(c,o={}){ const k = c+JSON.stringify(o); return mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color:c, roughness:.86, envMapIntensity:.6, ...o })); }
+const WATER = new THREE.MeshStandardMaterial({ color:'#86aeb0', roughness:.12, metalness:.05, envMapIntensity:1.1 });
+const STEEL = new THREE.MeshStandardMaterial({ color:'#dfe4ea', roughness:.28, metalness:.55, envMapIntensity:1.6 });
+const GLASS = new THREE.MeshStandardMaterial({ color:'#a9cde2', roughness:.08, metalness:.3, transparent:true, opacity:.62, envMapIntensity:1.4 });
+const BAROLO_LIGHT = new THREE.MeshStandardMaterial({ color:'#fff6dc', roughness:.3, emissive:'#ffd27a', emissiveIntensity:0 });
+const OBELISK = new THREE.MeshStandardMaterial({ color:'#f3efe6', roughness:.7, emissive:'#fff0d2', emissiveIntensity:0 });
+const PLANET_RING = new THREE.MeshStandardMaterial({ color:'#e9edf2', roughness:.4, metalness:.3, emissive:'#7f6bff', emissiveIntensity:0 });
+
+const B = (w,h,d) => new THREE.BoxGeometry(w,h,d);
+const Cy = (rt,rb,h,s=14) => new THREE.CylinderGeometry(rt,rb,h,s);
+const Sp = (r,ws=18,hs=12,tl=Math.PI) => new THREE.SphereGeometry(r,ws,hs,0,Math.PI*2,0,tl);
+const pyramid = (r,h) => { const g = Cy(0,r,h,4); g.rotateY(Math.PI/4); return g; };
+const frustum = (rt,rb,h,sx=1,sz=1) => { const g = Cy(rt,rb,h,4); g.rotateY(Math.PI/4); g.scale(sx,1,sz); return g; };
+function gable(w,h,d){ const s = new THREE.Shape(); s.moveTo(-w/2,0); s.lineTo(w/2,0); s.lineTo(0,h); s.closePath(); const g = new THREE.ExtrudeGeometry(s,{ depth:d, bevelEnabled:false }); g.translate(0,0,-d/2); return g; }
+function add(g,geo,mat,x=0,y=0,z=0,rx=0,ry=0,rz=0){ const m = new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.set(rx,ry,rz); m.castShadow = m.receiveShadow = true; g.add(m); return m; }
+function rod(g,a,b,r,mat,seg=8){ const d = b.clone().sub(a), m = add(g,Cy(r,r,d.length(),seg),mat); m.position.copy(a).addScaledVector(d,.5); m.quaternion.setFromUnitVectors(V3(0,1,0),d.normalize()); return m; }
+// Fila de ventanas sobre una fachada: eje 'z' (frente/fondo) o 'x' (laterales)
+function windows(g,mat,n,len,y,off,w=.1,h=.16,axis='z'){ for(let i=0;i<n;i++){ const t = -len/2+len*(i+.5)/n; if(axis==='z') add(g,B(w,h,.02),mat,t,y,off); else add(g,B(.02,h,w),mat,off,y,t); } }
+function palm(g,x,z,s=1){ const tr = M('#8a6b4b'), lf = M('#5f9a45'); add(g,Cy(.018*s,.026*s,.5*s,6),tr,x,.25*s,z);
+  for(let i=0;i<6;i++){ const l = add(g,B(.26*s,.012,.07*s),lf,x,.5*s,z,0,i*Math.PI/3,-.35); l.translateX(.11*s); } }
+function cypress(g,x,z,s=1){ add(g,Cy(0,.07*s,.36*s,7),M('#3f6f3a'),x,.2*s,z); }
+
+// Une todas las piezas fijas de un monumento por material: muchos menos draw calls
+function mergeStatic(g){
+  g.updateMatrixWorld(true); const buckets = new Map(), drop = [];
+  g.traverse(o => { if(!o.isMesh) return; for(let p=o; p && p!==g; p=p.parent) if(p.userData.dyn) return;
+    let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    for(const k of Object.keys(geo.attributes)) if(k!=='position' && k!=='normal') geo.deleteAttribute(k);
+    geo.applyMatrix4(o.matrixWorld); (buckets.get(o.material) || buckets.set(o.material,[]).get(o.material)).push(geo); drop.push(o); });
+  for(const o of drop) o.parent.remove(o);
+  for(const [mat,list] of buckets){ const m = new THREE.Mesh(mergeGeometries(list),mat); m.castShadow = m.receiveShadow = true; g.add(m); }
+  return g;
+}
+
+/* ==========================================================================
+   Maquetas de los monumentos (unidad ≈ una manzana chica; +z es el frente)
+   ========================================================================== */
+const build = {
+ obelisco(){ const g = new THREE.Group(), pave = M('#d9d3c6'), grass = M('#86b562');
+  add(g,Cy(1.05,1.08,.05,40),pave,0,.025,0);
+  add(g,Cy(.9,.9,.06,40),grass,0,.03,0);
+  add(g,B(1.86,.065,.18),pave,0,.033,0); add(g,B(.18,.065,1.86),pave,0,.033,0);
+  add(g,B(.66,.07,.66),pave,0,.035,0);
+  add(g,B(.5,.14,.5),M('#e9e4d8'),0,.14,0);
+  add(g,frustum(.16,.29,4.1),OBELISK,0,.21+2.05,0);
+  add(g,pyramid(.16,.36),OBELISK,0,4.31+.18,0);
+  const dark = M('#2d3138'); for(const [x,z,ry] of [[0,.121,0],[0,-.121,0],[.121,0,Math.PI/2],[-.121,0,Math.PI/2]]) add(g,B(.05,.08,.012),dark,x,4.05,z,0,ry);
+  for(let i=0;i<8;i++){ const a = i/8*Math.PI*2; add(g,Cy(.012,.012,.18,5),M('#3a3d44'),Math.cos(a)*.98,.12,Math.sin(a)*.98); }
+  return g; },
+
+ colon(){ const g = new THREE.Group(), wall = M('#eee0c3'), base = M('#d9c6a2'), roof = M('#6f817c'), dk = M('#3a3a40'), trim = M('#f8f0e2');
+  add(g,B(2.5,.3,1.9),base,0,.15,0);
+  add(g,B(2.4,.78,1.8),wall,0,.69,0);
+  add(g,B(2.52,.07,1.92),trim,0,1.1,0);
+  for(const y of [.22,.52,.86]){ windows(g,dk,9,2.1,y,.91,.1,y<.3?.12:.18); windows(g,dk,9,2.1,y,-.91,.1,.16); windows(g,dk,7,1.5,y,1.21,.1,.16,'x'); windows(g,dk,7,1.5,y,-1.21,.1,.16,'x'); }
+  add(g,B(1.4,.3,.3),base,0,.15,1.05);
+  for(let i=0;i<6;i++) add(g,Cy(.04,.046,.56,10),trim,-.55+i*.22,.58,1.08);
+  add(g,B(1.42,.1,.32),trim,0,.91,1.06);
+  add(g,B(1.0,.26,.12),wall,0,1.08,1.0);
+  add(g,frustum(.95,1.22,.36,1.3,.97),roof,0,1.32,0);
+  add(g,Cy(.3,.4,.2,18),wall,0,1.56,0);
+  add(g,Sp(.31,20,10,Math.PI/2),roof,0,1.66,0);
+  add(g,Cy(.05,.06,.16,10),trim,0,2.0,0); add(g,Sp(.05,10,8),roof,0,2.1,0);
+  for(const x of [-1.0,1.0]) add(g,pyramid(.22,.2),roof,x,1.24,.72);
+  return g; },
+
+ congreso(){ const g = new THREE.Group(), st = M('#ddd4c2'), stD = M('#c8bda6'), cu = M('#6fa48f',{ roughness:.5, metalness:.25 }), dk = M('#3c3a3b'), wh = M('#f1eadc');
+  add(g,B(2.3,.14,1.7),stD,0,.07,-.1);
+  add(g,B(2.2,.74,1.6),st,0,.51,-.1);
+  add(g,B(2.32,.07,1.72),wh,0,.91,-.1);
+  for(const y of [.35,.66]){ windows(g,dk,9,1.9,y,.71,.09,.17); windows(g,dk,9,1.9,y,-.91,.09,.17); windows(g,dk,6,1.3,y,1.11,.09,.17,'x'); windows(g,dk,6,1.3,y,-1.11,.09,.17,'x'); }
+  add(g,B(1.2,.06,.42),stD,0,.03,.9); add(g,B(1.1,.06,.34),stD,0,.09,.86); add(g,B(1.0,.06,.28),stD,0,.15,.83);
+  for(let i=0;i<8;i++) add(g,Cy(.034,.04,.6,10),wh,-.42+i*.12,.48,.84);
+  add(g,B(1.08,.08,.32),wh,0,.82,.82);
+  add(g,gable(1.08,.24,.3),wh,0,.86,.82);
+  add(g,Cy(.56,.6,.12,28),wh,0,1.0,-.15);
+  add(g,Cy(.46,.46,.42,28),st,0,1.27,-.15);
+  for(let i=0;i<16;i++){ const a = i/16*Math.PI*2; add(g,Cy(.022,.022,.4,6),wh,Math.cos(a)*.48,1.27,-.15+Math.sin(a)*.48); }
+  add(g,Cy(.52,.52,.05,28),wh,0,1.5,-.15);
+  const dome = add(g,Sp(.47,28,14,Math.PI/2),cu,0,1.52,-.15); dome.scale.y = 1.35;
+  add(g,Cy(.07,.08,.2,10),wh,0,2.25,-.15); add(g,Sp(.08,12,8,Math.PI/2),cu,0,2.35,-.15); add(g,Cy(.008,.008,.18,5),dk,0,2.5,-.15);
+  for(const x of [-.95,.95]){ add(g,Cy(.12,.12,.12,12),wh,x,.98,.5); add(g,Sp(.12,12,8,Math.PI/2),cu,x,1.04,.5); }
+  return g; },
+
+ rosada(){ const g = new THREE.Group(), pink = M('#e4a294'), pinkD = M('#d58b7d'), wh = M('#f6ede5'), dk = M('#4a3a39'), slate = M('#5d686e'), pave = M('#ddd6c8'), grass = M('#8bb867');
+  const z0 = -.7;
+  add(g,B(2.9,.9,.95),pink,0,.45,z0);
+  add(g,B(2.98,.06,1.02),wh,0,.93,z0);
+  add(g,B(2.9,.07,.95),pinkD,0,.99,z0);
+  for(const y of [.3,.65]) windows(g,dk,12,2.5,y,z0+.48,.08,.17);
+  add(g,B(.66,1.25,1.0),pink,0,.62,z0+.02);
+  add(g,B(.7,.06,1.04),wh,0,1.27,z0+.02);
+  add(g,B(.26,.4,.03),dk,0,.2,z0+.52); add(g,Cy(.13,.13,.03,16,1),dk,0,.4,z0+.52,Math.PI/2);
+  add(g,B(.34,.04,.12),wh,0,.62,z0+.56);
+  for(const x of [-1.25,1.25]){ add(g,B(.46,1.1,.99),pink,x,.55,z0); add(g,frustum(.18,.36,.3,1,1.4),slate,x,1.25,z0); }
+  add(g,B(2.9,.04,1.55),pave,0,.02,.62);
+  for(const x of [-.8,.8]) add(g,B(.95,.05,.6),grass,x,.03,.62);
+  add(g,B(.2,.08,.2),wh,0,.06,.62); add(g,frustum(.05,.09,.42,1,1),wh,0,.31,.62); add(g,Sp(.05,10,8),wh,0,.56,.62);
+  add(g,new THREE.TorusGeometry(.24,.012,6,40),wh,0,.045,.62,Math.PI/2);
+  for(const [x,z] of [[-1.2,.3],[1.2,.3],[-1.2,1.15],[1.2,1.15],[-.4,1.2],[.4,1.2]]) palm(g,x,z,.9);
+  return g; },
+
+ mujer(){ const g = new THREE.Group(), con = M('#d6d1c6'), wh = M('#f7f7f5',{ roughness:.4 }), brick = M('#b4563f'), roofM = M('#5a4d48'), crane = M('#c9452f'), dk = M('#2f2b2a');
+  add(g,B(3.0,.02,.95),M('#5d7f80'),0,.01,0);
+  add(g,B(3.0,.04,.95),WATER,0,.04,0);
+  for(const z of [-1,1]){ add(g,B(3.0,.1,.6),con,0,.05,z*.78);
+    for(const x of [-1.05,-.3,.45]){ add(g,B(.68,.4,.36),brick,x,.3,z*.9); add(g,B(.7,.06,.38),roofM,x,.53,z*.9); windows(g,dk,4,.55,.28,z*.9-z*.185,.07,.12); } }
+  add(g,B(.16,.04,1.3),wh,0,.16,0);
+  add(g,B(.18,.06,.18),wh,0,.13,.42);
+  const base = V3(0,.17,.42), tip = V3(0,1.42,-.6);
+  rod(g,base,tip,.035,wh,10);
+  for(let i=1;i<=7;i++){ const k = i/8; rod(g,base.clone().lerp(tip,k),V3(0,.18,.42-k*1.05),.006,wh,4); }
+  for(const z of [-.62,.62]) add(g,B(.2,.03,.08),wh,0,.12,z);
+  const cx = 1.15, cz = -.62; add(g,B(.04,.5,.04),crane,cx-.08,.35,cz); add(g,B(.04,.5,.04),crane,cx+.08,.35,cz);
+  add(g,B(.24,.06,.1),crane,cx,.62,cz); add(g,B(.06,.05,.65),crane,cx,.68,cz+.22); add(g,B(.1,.08,.1),dk,cx,.7,cz-.12);
+  return g; },
+
+ bombonera(){ const g = new THREE.Group(), blue = M('#1e4fa3'), gold = M('#f2c418'), wh = M('#eef0f2'), dk = M('#2b2f36'), field = M('#4f9a3f'), line = M('#f6f6f2');
+  const hx = .78, hz = .5;
+  add(g,B(2.9,.04,2.3),M('#cfc8bb'),0,.02,.1);
+  add(g,B(hx*2,.05,hz*2),field,0,.04,0);
+  add(g,B(.02,.055,hz*2),line,0,.045,0); add(g,new THREE.TorusGeometry(.13,.008,4,28),line,0,.07,0,Math.PI/2);
+  // Tres tribunas curvas (forma de "D") y un lado recto de palcos. La forma se dibuja en (x, z) del mundo.
+  function tier(o,t,h,mat){ const s = new THREE.Shape(), r0 = .22+o, r1 = r0+t, ax = hx-.22, az = hz-.22, zb = -hz;
+    // contorno externo
+    s.moveTo(-ax-r1, zb); s.lineTo(-ax-r1, az); s.absarc(-ax, az, r1, Math.PI, Math.PI/2, true); s.lineTo(ax, az+r1); s.absarc(ax, az, r1, Math.PI/2, 0, true); s.lineTo(ax+r1, zb); s.lineTo(ax+r0, zb);
+    s.lineTo(ax+r0, az); s.absarc(ax, az, r0, 0, Math.PI/2, false); s.lineTo(-ax, az+r0); s.absarc(-ax, az, r0, Math.PI/2, Math.PI, false); s.lineTo(-ax-r0, zb); s.closePath();
+    // rotar +90° en x lleva la y de la forma a +z y la extrusión hacia abajo: se sube la altura h
+    const geo = new THREE.ExtrudeGeometry(s,{ depth:h, bevelEnabled:false, curveSegments:10 }); geo.rotateX(Math.PI/2); geo.translate(0,h,0);
+    add(g,geo,mat,0,0,0); }
+  tier(0,.2,.3,blue); tier(.2,.2,.52,gold); tier(.4,.18,.72,blue);
+  add(g,B(2.3,1.0,.24),wh,0,.5,-hz-.12);
+  for(const y of [.4,.62,.84]) add(g,B(2.1,.07,.02),dk,0,y,-hz+.005);
+  for(const [i,y] of [[0,.22],[1,.48],[2,.74]]) add(g,B(2.32,.1,.02),i%2 ? gold : blue,0,y,-hz-.245);   // franjas azul y oro en el lado de afuera
+  add(g,B(2.32,.05,.3),gold,0,1.02,-hz-.12);
+  for(const x of [-.9,.9]) add(g,B(.05,.5,.05),M('#9aa0a8'),x,1.25,-hz-.12);
+  return g; },
+
+ caminito(){ const g = new THREE.Group(), r = rng(11), cols = ['#e5483b','#f2c12e','#2f8fce','#3aa776','#f08a24','#7b4fa0','#e56aa6','#27a3a1','#3c5a9a'], tin = M('#8d9196'), dk = M('#2a2a2e');
+  add(g,B(2.7,.03,1.7),M('#c3baa9'),0,.015,0);
+  add(g,B(2.7,.035,.36),M('#d6c9b3'),0,.02,0);
+  for(const side of [-1,1]){ let x = -1.3;
+    while(x < 1.18){ const w = .3+r()*.16, h = .42+r()*.3, d = .5, z = side*(.2+d/2), c1 = cols[Math.floor(r()*cols.length)], c2 = cols[Math.floor(r()*cols.length)];
+      add(g,B(w,h*.55,d),M(c1),x+w/2,h*.275,z); add(g,B(w,h*.45,d),M(c2),x+w/2,h*.55+h*.225,z);
+      add(g,B(w+.02,.02,d+.02),r() < .5 ? tin : M('#b0533f'),x+w/2,h+.01,z,side*.12,0,0);
+      add(g,B(w*.6,.025,.08),dk,x+w/2,h*.55,side*.19);
+      add(g,B(.08,.16,.02),dk,x+w/2,.08,side*.2); add(g,B(.07,.1,.02),M('#f6efe2'),x+w/2,h*.75,side*.2);
+      x += w+.025; } }
+  const tango = new THREE.Group(); tango.userData.dyn = true; tango.position.set(.25,.035,0); g.add(tango);
+  const suit = M('#1f2228'), skin = M('#e0b896'), red = M('#c62d3a');
+  add(tango,Cy(.028,.034,.17,8),suit,-.035,.085,0); add(tango,Sp(.026,10,8),skin,-.035,.2,0);
+  add(tango,Cy(.012,.055,.13,10),red,.035,.065,0); add(tango,Cy(.02,.024,.06,8),red,.035,.155,0); add(tango,Sp(.024,10,8),skin,.035,.205,0);
+  add(g,Cy(.008,.01,.36,6),dk,-.6,.18,.14); add(g,Sp(.03,8,6),M('#f6e7b5'),-.6,.37,.14);
+  g.userData.tango = tango;
+  return g; },
+
+ recoleta(){ const g = new THREE.Group(), r = rng(5), wall = M('#ece5d8'), pave = M('#d2cabb'), tones = ['#ece7dd','#d9d3c7','#c8c2b6','#f1ece2','#bdb6a9','#a9a59c'], cu = M('#7d9a8c'), dk = M('#3a3a3d');
+  const S = 2.4;
+  add(g,B(S,.04,S),pave,0,.02,0);
+  for(const [x,z,w,d] of [[0,S/2,S,.06],[0,-S/2,S,.06],[S/2,0,.06,S],[-S/2,0,.06,S]]) add(g,B(w,.24,d),wall,x,.12,z);
+  add(g,B(.16,.045,S-.1),M('#e2dbcd'),0,.025,0); add(g,B(S-.1,.045,.16),M('#e2dbcd'),0,.025,0);
+  for(let i=0;i<7;i++) for(let j=0;j<7;j++){ if(i===3 || j===3) continue;
+    const x = -1.02+i*.34, z = -1.02+j*.34, w = .18+r()*.08, h = .18+r()*.24, m = M(tones[Math.floor(r()*tones.length)]);
+    add(g,B(w,h,w),m,x,.04+h/2,z); const k = r(), top = .04+h;
+    if(k < .3) add(g,pyramid(w*.62,.1),m,x,top+.05,z);
+    else if(k < .55){ add(g,Cy(w*.32,w*.34,.05,10),m,x,top+.025,z); add(g,Sp(w*.32,12,8,Math.PI/2),cu,x,top+.05,z); }
+    else if(k < .75){ add(g,B(.015,.12,.015),dk,x,top+.06,z); add(g,B(.07,.015,.015),dk,x,top+.085,z); }
+    else if(k < .88) add(g,Sp(.035,8,6),M('#f4f0e8'),x,top+.04,z);
+    else add(g,B(w*.7,.02,w*.7),m,x,top+.01,z); }
+  for(const [x,z] of [[-.25,-.6],[.25,.6],[-.6,.25],[.6,-.25],[-.25,.25]]) cypress(g,x,z,.9);
+  for(let i=0;i<4;i++) add(g,Cy(.03,.035,.34,10),wall,-.27+i*.18,.2,S/2+.08);
+  add(g,B(.7,.06,.16),wall,0,.39,S/2+.08); add(g,gable(.7,.16,.16),wall,0,.42,S/2+.08);
+  return g; },
+
+ floralis(){ const g = new THREE.Group(), rim = M('#dad5cb'), grass = M('#88b866');
+  add(g,Cy(1.25,1.28,.04,44),grass,0,.02,0);
+  add(g,Cy(1.0,1.02,.07,44),rim,0,.035,0);
+  add(g,Cy(.93,.93,.05,44),WATER,0,.05,0);
+  add(g,Cy(.12,.17,.1,16),STEEL,0,.1,0);
+  add(g,Cy(.04,.055,.72,12),STEEL,0,.5,0);
+  const head = new THREE.Group(); head.position.y = .86; head.userData.dyn = true; g.add(head);
+  add(head,Cy(.1,.06,.09,16),STEEL,0,0,0);
+  for(let i=0;i<4;i++){ const a = i/4*Math.PI*2; rod(head,V3(0,.03,0),V3(Math.cos(a)*.04,.2,Math.sin(a)*.04),.006,STEEL,4); add(head,Sp(.018,8,6),STEEL,Math.cos(a)*.04,.21,Math.sin(a)*.04); }
+  const petalGeo = new THREE.SphereGeometry(1,18,12); petalGeo.scale(.16,.6,.04); petalGeo.translate(0,.6,.02);
+  const petals = [];
+  for(let i=0;i<6;i++){ const hinge = new THREE.Group(); hinge.rotation.y = i*Math.PI/3; head.add(hinge);
+    const tilt = new THREE.Group(); tilt.position.z = .07; hinge.add(tilt); add(tilt,petalGeo,STEEL); petals.push(tilt); }
+  g.userData.petals = petals;
+  return g; },
+
+ planetario(){ const g = new THREE.Group(), wh = M('#eeece8',{ roughness:.5 }), con = M('#c9c4ba'), grass = M('#86b562'), silver = M('#d4d8de',{ roughness:.3, metalness:.6 });
+  add(g,Cy(1.3,1.34,.04,40),grass,0,.02,0);
+  add(g,Cy(.7,.75,.06,32),con,0,.05,0);
+  add(g,Cy(.42,.44,.05,24),M('#d8d2c5'),.82,.045,.62); add(g,Cy(.38,.38,.05,24),WATER,.82,.055,.62);
+  for(let i=0;i<3;i++){ const a = i/3*Math.PI*2+.5; rod(g,V3(Math.cos(a)*.62,.06,Math.sin(a)*.62),V3(Math.cos(a)*.24,.66,Math.sin(a)*.24),.065,con,8); }
+  add(g,Sp(.6,32,20),wh,0,1.12,0);
+  add(g,Sp(.615,32,10,Math.PI*.4),silver,0,1.12,0);
+  add(g,new THREE.TorusGeometry(.64,.045,8,56),PLANET_RING,0,1.12,0,Math.PI/2);
+  add(g,B(.2,.03,.7),con,0,.36,.6,.75,0,0);
+  add(g,new THREE.IcosahedronGeometry(.07,0),M('#4a4440',{ roughness:.95 }),-.62,.1,.62);
+  return g; },
+
+ cabildo(){ const g = new THREE.Group(), wh = M('#f7f4ee'), tile = M('#b5583f'), dk = M('#3b3530'), wood = M('#6b4a35');
+  add(g,B(1.7,.34,.55),wh,0,.17,0); add(g,B(1.7,.3,.55),wh,0,.49,0);
+  for(let i=0;i<5;i++){ const x = -.68+i*.34;
+    for(const y of [.1,.42]){ add(g,B(.2,.16,.03),dk,x,y,.27); add(g,Cy(.1,.1,.03,12),dk,x,y+.08,.27,Math.PI/2); } }
+  add(g,B(1.72,.03,.1),wood,0,.35,.31);
+  add(g,gable(.62,.18,1.74),tile,0,.64,0,0,Math.PI/2);
+  add(g,B(.34,.5,.34),wh,0,.89,0); add(g,B(.38,.04,.38),wh,0,1.15,0);
+  for(const [x,z,ry] of [[0,.175,0],[0,-.175,0],[.175,0,Math.PI/2],[-.175,0,Math.PI/2]]) add(g,B(.12,.18,.02),dk,x,.98,z,0,ry);
+  add(g,Cy(.13,.15,.14,12),wh,0,1.24,0); add(g,Sp(.14,12,8,Math.PI/2),tile,0,1.31,0); add(g,Cy(.008,.008,.18,5),dk,0,1.5,0);
+  return g; },
+
+ catedral(){ const g = new THREE.Group(), st = M('#eae1cf'), wh = M('#f7f1e4'), cu = M('#7f9b8e',{ roughness:.5 }), dk = M('#3c3a3b');
+  add(g,B(1.5,.8,1.3),st,0,.4,-.15);
+  add(g,B(1.62,.12,.42),st,0,.06,.68);
+  for(let i=0;i<12;i++) add(g,Cy(.034,.04,.62,10),wh,-.66+i*.12,.43,.74);
+  add(g,B(1.62,.08,.38),wh,0,.78,.7); add(g,gable(1.62,.3,.38),wh,0,.82,.7);
+  add(g,B(.26,.36,.02),dk,0,.3,.51);
+  add(g,Cy(.3,.3,.25,20),st,0,.92,-.3); const d = add(g,Sp(.31,20,10,Math.PI/2),cu,0,1.04,-.3); d.scale.y = 1.25;
+  add(g,Cy(.05,.06,.16,8),wh,0,1.47,-.3); add(g,Cy(.006,.006,.16,4),dk,0,1.62,-.3); add(g,B(.07,.012,.012),dk,0,1.64,-.3);
+  return g; },
+
+ barolo(){ const g = new THREE.Group(), st = M('#eadcc2'), stD = M('#d6c6a8'), dk = M('#3a3633'), cu = M('#8c9a92',{ roughness:.5 });
+  add(g,B(1.0,1.5,.9),st,0,.75,0); add(g,B(1.04,.06,.94),stD,0,1.5,0);
+  for(let y=.25;y<1.45;y+=.22){ windows(g,dk,5,.8,y,.46,.08,.12); windows(g,dk,5,.8,y,-.46,.08,.12); windows(g,dk,4,.7,y,.51,.08,.12,'x'); windows(g,dk,4,.7,y,-.51,.08,.12,'x'); }
+  add(g,B(.24,.3,.03),dk,0,.15,.46);
+  add(g,B(.7,.6,.62),st,0,1.83,0); add(g,B(.74,.05,.66),stD,0,2.14,0);
+  add(g,Cy(.22,.27,.62,8),st,0,2.47,0);
+  const d = add(g,Sp(.24,12,8,Math.PI/2),cu,0,2.78,0); d.scale.y = 1.5;
+  add(g,Cy(.07,.07,.2,10),BAROLO_LIGHT,0,3.24,0); add(g,Cy(.02,.06,.1,8),cu,0,3.39,0); add(g,Cy(.006,.006,.2,4),dk,0,3.53,0);
+  return g; },
+
+ tortoni(){ const g = new THREE.Group(), fa = M('#e9ddcb'), wood = M('#5b3a2a'), slate = M('#5d666e'), dk = M('#36312e'), red = M('#9e2b2b');
+  add(g,B(1.0,1.0,.7),fa,0,.5,0); add(g,B(1.02,.3,.72),wood,0,.15,0);
+  for(const y of [.45,.65,.85]) windows(g,dk,5,.8,y,.36,.09,.13);
+  for(let i=0;i<3;i++){ add(g,B(.18,.2,.02),M('#e9c97a',{ emissive:'#ffcf8a', emissiveIntensity:.25 }),-.3+i*.3,.13,.365); }
+  add(g,B(.8,.03,.16),red,0,.33,.43);
+  add(g,frustum(.36,.6,.22,1.2,.85),slate,0,1.11,0);
+  for(const x of [-.3,0,.3]){ add(g,Cy(.05,.05,.01,10),M('#f1ede4'),x,.11,.62); add(g,Cy(.008,.008,.1,4),dk,x,.06,.62); }
+  return g; },
+
+ galerias(){ const g = new THREE.Group(), st = M('#e4d4b9'), wh = M('#f6efe2'), slate = M('#5f6970'), dk = M('#3a3633');
+  add(g,B(2.0,.75,1.5),st,0,.375,0); add(g,B(2.04,.06,1.54),wh,0,.76,0);
+  for(const y of [.22,.5]){ windows(g,dk,10,1.8,y,.76,.1,.16); windows(g,dk,10,1.8,y,-.76,.1,.16); windows(g,dk,7,1.3,y,1.01,.1,.16,'x'); windows(g,dk,7,1.3,y,-1.01,.1,.16,'x'); }
+  add(g,frustum(.75,1.0,.22,1.35,1.0),slate,0,.9,0);
+  add(g,Cy(.32,.32,.12,20),wh,0,1.06,0); add(g,Sp(.33,20,10,Math.PI/2),GLASS,0,1.12,0);
+  for(const [x,z] of [[-.9,.65],[.9,.65],[-.9,-.65],[.9,-.65]]){ add(g,Cy(.13,.13,.3,12),st,x,.9,z); add(g,Sp(.14,12,8,Math.PI/2),slate,x,1.05,z); }
+  return g; },
+
+ kavanagh(){ const g = new THREE.Group(), st = M('#dcd2bf'), dk = M('#4a4743');
+  // planta en forma de proa: el filo apunta al frente (+z)
+  const plan = [[-.45,-.4],[.45,-.4],[.45,.05],[0,.5],[-.45,.05]];
+  const prism = (k,y0,h,mat) => { const s = new THREE.Shape(plan.map(([x,z]) => new THREE.Vector2(x*k,z*k))); const geo = new THREE.ExtrudeGeometry(s,{ depth:h, bevelEnabled:false }); geo.rotateX(Math.PI/2); geo.translate(0,y0+h,0); return add(g,geo,mat); };
+  prism(1,0,1.6,st); prism(.82,1.6,.6,st); prism(.66,2.2,.5,st); prism(.5,2.7,.38,st); prism(.34,3.08,.22,st);
+  for(let y=.3;y<1.6;y+=.25) prism(1.012,y,.03,dk);
+  for(let y=1.75;y<2.2;y+=.22) prism(.832,y,.03,dk);
+  return g; },
+
+ torre(){ const g = new THREE.Group(), brick = M('#b7583f'), st = M('#ece3d2'), cu = M('#5f8a72',{ roughness:.5 }), wh = M('#fbf8f1'), dk = M('#2f2c2b'), grass = M('#86b562');
+  add(g,Cy(.78,.8,.04,32),grass,0,.02,0); add(g,B(.5,.2,.5),st,0,.12,0);
+  add(g,B(.32,1.5,.32),brick,0,.95,0);
+  for(const [x,z] of [[.15,.15],[-.15,.15],[.15,-.15],[-.15,-.15]]) add(g,B(.05,1.5,.05),st,x,.95,z);
+  add(g,B(.4,.34,.4),st,0,1.87,0);
+  for(const [x,z,rx,rz] of [[0,.205,Math.PI/2,0],[0,-.205,Math.PI/2,0],[.205,0,0,Math.PI/2],[-.205,0,0,Math.PI/2]]){ add(g,Cy(.12,.12,.02,20),wh,x,1.87,z,rx,0,rz); add(g,B(.012,.08,.012),dk,x*1.06,1.89,z*1.06); }   // relojes
+  add(g,B(.44,.04,.44),st,0,2.06,0); add(g,B(.26,.18,.26),st,0,2.17,0);
+  add(g,Cy(.12,.14,.1,8),st,0,2.31,0); add(g,Sp(.13,12,8,Math.PI/2),cu,0,2.36,0); add(g,Cy(.006,.006,.16,4),dk,0,2.56,0);
+  return g; },
+
+ mercado(){ const g = new THREE.Group(), st = M('#efe3cf'), dk = M('#3a3633'), iron = M('#46505a',{ roughness:.5, metalness:.4 });
+  add(g,B(1.8,.4,1.3),st,0,.2,0);
+  add(g,B(1.86,.05,1.36),M('#ddcfb6'),0,.42,0);
+  for(let i=0;i<6;i++){ const x = -.75+i*.3; add(g,B(.16,.2,.02),dk,x,.15,.66); add(g,Cy(.08,.08,.02,12),dk,x,.25,.66,Math.PI/2); }
+  add(g,gable(1.1,.32,1.2),GLASS,0,.44,0,0,Math.PI/2);
+  for(let i=0;i<7;i++){ const x = -.54+i*.18; add(g,B(.02,.02,.64),iron,x,.6,.275,.527); add(g,B(.02,.02,.64),iron,x,.6,-.275,-.527); }   // costillas de hierro
+  add(g,B(1.2,.025,.025),iron,0,.76,0);
+  const cols = ['#e8513e','#f3b833','#4c9a43','#e88a2d'];
+  for(let i=0;i<4;i++) add(g,B(.24,.03,.12),M(cols[i]),-.54+i*.36,.36,.73,.3,0,0);
+  return g; },
+
+ usina(){ const g = new THREE.Group(), brick = M('#b9573f'), st = M('#ebe0c9'), roof = M('#6b5a4f'), dk = M('#2f2b2a'), wh = M('#fbf8f1');
+  add(g,B(1.6,.75,1.0),brick,0,.375,0); add(g,B(1.64,.06,1.04),st,0,.76,0);
+  for(let i=0;i<5;i++){ const x = -.6+i*.3; add(g,B(.16,.36,.02),dk,x,.32,.51); add(g,Cy(.08,.08,.02,12),dk,x,.5,.51,Math.PI/2); }
+  add(g,gable(1.04,.22,1.6),roof,0,.79,0,0,Math.PI/2);
+  const tx = .62, tz = .32;
+  add(g,B(.34,1.75,.34),brick,tx,.875,tz); add(g,B(.38,.06,.38),st,tx,1.75,tz);
+  add(g,Cy(.15,.15,.02,18),wh,tx,1.5,tz+.175,Math.PI/2); add(g,B(.01,.1,.012),dk,tx,1.52,tz+.19);
+  add(g,B(.3,.26,.3),brick,tx,1.91,tz); add(g,pyramid(.24,.3),roof,tx,2.19,tz);
+  return g; },
+
+ aguas(){ const g = new THREE.Group(), tc = M('#c8784f'), cr = M('#f0e3c9'), slate = M('#5d6670'), dk = M('#3a3330'), gold = M('#d9b45a',{ metalness:.5, roughness:.4 });
+  add(g,B(1.9,.85,1.9),tc,0,.425,0);
+  for(const y of [.3,.6]) add(g,B(1.93,.035,1.93),cr,0,y,0);
+  add(g,B(1.96,.06,1.96),cr,0,.88,0);
+  for(const y of [.17,.45,.73]){ windows(g,dk,7,1.5,y,.96,.08,.13); windows(g,dk,7,1.5,y,-.96,.08,.13); windows(g,dk,7,1.5,y,.96,.08,.13,'x'); windows(g,dk,7,1.5,y,-.96,.08,.13,'x'); }
+  add(g,frustum(.62,.95,.36,1,1),slate,0,1.09,0);
+  for(const [x,z] of [[.82,.82],[-.82,.82],[.82,-.82],[-.82,-.82]]){ add(g,B(.42,1.02,.42),tc,x,.51,z); add(g,B(.45,.04,.45),cr,x,1.03,z); add(g,frustum(.12,.3,.32,1,1),slate,x,1.21,z); add(g,Sp(.04,8,6),gold,x,1.4,z); }
+  for(const [x,z] of [[0,.96],[0,-.96],[.96,0],[-.96,0]]){ add(g,Cy(.12,.12,.12,12),cr,x,.97,z); add(g,Sp(.12,12,8,Math.PI/2),slate,x,1.03,z); }
+  return g; },
+
+ biblioteca(){ const g = new THREE.Group(), con = M('#bdb8af',{ roughness:.95 }), conD = M('#a9a49b',{ roughness:.95 }), glass = M('#3a4048',{ roughness:.3 }), grass = M('#86b562');
+  add(g,Cy(1.35,1.38,.04,40),grass,0,.02,0);
+  for(const [x,z] of [[-.5,-.28],[.5,-.28],[-.5,.28],[.5,.28]]) add(g,B(.2,.95,.2),con,x,.5,z);
+  add(g,B(.36,.95,.36),conD,0,.5,0);
+  add(g,B(1.8,.42,1.1),con,0,1.16,0);
+  add(g,B(1.7,.12,1.0),glass,0,1.42,0);
+  add(g,B(1.86,.06,1.16),conD,0,1.51,0);
+  add(g,B(.6,.16,.4),con,.4,1.62,-.1);
+  add(g,B(1.86,.04,.04),conD,0,1.0,.57); add(g,B(1.86,.04,.04),conD,0,1.0,-.57);
+  return g; },
+
+ derecho(){ const g = new THREE.Group(), gr = M('#c8c2b6'), grD = M('#b3ada2'), dk = M('#3a3836');
+  add(g,B(2.4,.86,1.0),gr,0,.43,-.2);
+  for(let i=0;i<4;i++) add(g,B(2.1-i*.06,.05,.14),grD,0,.025+i*.05,.62-i*.07);
+  add(g,B(1.95,.08,.3),grD,0,.2,.38);
+  for(let i=0;i<14;i++) add(g,Cy(.035,.04,.62,10),gr,-.78+i*.12,.55,.42);
+  add(g,B(1.95,.12,.32),gr,0,.92,.38); add(g,B(1.95,.1,.24),gr,0,1.03,.34);
+  for(const y of [.35,.65]){ windows(g,dk,6,.5,y,.31,.06,.16); }
+  return g; },
+
+ malba(){ const g = new THREE.Group(), lime = M('#e8e2d4'), limeD = M('#d5cdbb'), dk = M('#3a3836');
+  add(g,B(1.6,.08,1.2),limeD,0,.04,.05);
+  add(g,B(1.4,.36,.95),lime,.05,.26,-.1);
+  add(g,B(1.05,.38,.85),lime,.22,.63,-.15);
+  add(g,B(.55,.72,.58),GLASS,-.5,.44,.18);
+  add(g,B(.62,.2,.42),lime,.5,.92,.2);
+  add(g,B(.5,.03,.2),dk,.2,.45,.33);
+  return g; },
+
+ japones(){ const g = new THREE.Group(), grass = M('#7eb05a'), red = M('#c8352b'), dk = M('#3a302c'), stone = M('#9c9890'), pink = M('#f2b6c8'), pine = M('#3f6f3a'), trunk = M('#6b4c38');
+  add(g,Cy(1.5,1.52,.04,40),grass,0,.02,0);
+  const pond = add(g,Cy(.7,.7,.04,32),WATER,0,.045,.05); pond.scale.x = 1.45;
+  add(g,Cy(.18,.2,.06,12),M('#8fb16a'),.55,.06,.15);
+  for(const z of [-.06,.06]) add(g,new THREE.TorusGeometry(.32,.018,6,20,Math.PI),red,0,.04,z);
+  for(let i=0;i<7;i++){ const a = Math.PI*(i+.5)/7; add(g,B(.06,.015,.14),red,-Math.cos(a)*.32,.04+Math.sin(a)*.32,0,0,0,a-Math.PI/2); }
+  const px = -.95, pz = -.75;
+  for(let i=0;i<3;i++){ const s = 1-i*.22; add(g,B(.24*s,.12,.24*s),red,px,.1+i*.17,pz); add(g,pyramid(.24*s,.07),dk,px,.19+i*.17,pz); }
+  add(g,Cy(.006,.006,.12,4),dk,px,.66,pz);
+  add(g,Cy(.03,.04,.12,6),stone,.9,.08,.75); add(g,B(.1,.05,.1),stone,.9,.16,.75); add(g,pyramid(.09,.06),stone,.9,.21,.75);
+  for(const [x,z,k] of [[-.6,.8,0],[.95,-.5,0],[-1.1,.2,1],[.3,-.95,1],[1.15,.3,0],[-.3,1.05,1]]){ add(g,Cy(.02,.025,.16,5),trunk,x,.1,z); add(g,new THREE.IcosahedronGeometry(.17,0),k ? pine : pink,x,.27,z); }
+  return g; },
+
+ monumental(){ const g = new THREE.Group(), wh = M('#f1f1ee'), red = M('#d7262e'), field = M('#4f9a3f'), line = M('#f6f6f2'), grey = M('#9aa0a8');
+  add(g,B(1.4,.05,.9),field,0,.04,0); add(g,B(.02,.055,.9),line,0,.045,0); add(g,new THREE.TorusGeometry(.13,.008,4,28),line,0,.07,0,Math.PI/2);
+  const ring = (rx,rz,t,h,mat,y0=0) => { const s = new THREE.Shape(); s.absellipse(0,0,rx+t,rz+t,0,Math.PI*2,false); const hole = new THREE.Path(); hole.absellipse(0,0,rx,rz,0,Math.PI*2,true); s.holes.push(hole);
+    const geo = new THREE.ExtrudeGeometry(s,{ depth:h, bevelEnabled:false, curveSegments:40 }); geo.rotateX(Math.PI/2); geo.translate(0,y0+h,0); return add(g,geo,mat); };
+  ring(.8,.55,.2,.28,wh); ring(1.0,.75,.2,.52,wh); ring(1.2,.95,.2,.74,wh);
+  ring(1.4,1.15,.01,.12,red,.42);
+  for(const [x,z] of [[1.05,.8],[-1.05,.8],[1.05,-.8],[-1.05,-.8]]){ add(g,Cy(.02,.03,.7,6),grey,x,1.0,z); add(g,B(.14,.06,.04),grey,x,1.37,z); }
+  return g; },
+};
+
+/* ==========================================================================
+   Planeta: terreno, agua, Riachuelo, avenidas
+   ========================================================================== */
+const CITY_KM = 13.5;
+function classify(px,py){
+  const sd = coastSD(px,py)*U, [kx,ky] = pToKm(px,py), km = Math.hypot(kx,ky);
+  return { sd, km, park: inPark(kx,ky), theta: Math.hypot(px,py) };
+}
+function heightAt(n){
+  const [px,py] = dirToP(n), sd = coastSD(px,py)*U, th = Math.hypot(px,py);
+  let h = R;
+  if(sd > 0) h = R - .1 - Math.min(.55, sd*.3);
+  else if(sd > -.3) h = R - .1*(1 + sd/.3);
+  if(sd < 0 && th > 92) h += smooth(92,125,th) * (vnoise(px*.06,py*.06)*.32) * smooth(0,-1.2,sd);
+  return h;
+}
+const FIELDS = ['#b7cc72','#d3c584','#9fbf62','#c8b878','#a9c979','#dccc8e','#c0d27f'];
+function buildPlanet(){
+  const geo = new THREE.IcosahedronGeometry(1,62), pos = geo.attributes.position, v = V3(), cache = new Map();
+  for(let i=0;i<pos.count;i++){ v.fromBufferAttribute(pos,i).normalize(); const key = Math.round(v.x*3e4)+','+Math.round(v.y*3e4)+','+Math.round(v.z*3e4);
+    let h = cache.get(key); if(h === undefined){ h = heightAt(v); cache.set(key,h); } v.multiplyScalar(h); pos.setXYZ(i,v.x,v.y,v.z); }
+  const col = new Float32Array(pos.count*3), c = new THREE.Color(), a = V3(), b = V3(), d = V3();
+  for(let i=0;i<pos.count;i+=3){
+    a.fromBufferAttribute(pos,i); b.fromBufferAttribute(pos,i+1); d.fromBufferAttribute(pos,i+2);
+    const n = a.add(b).add(d).normalize(), [px,py] = dirToP(n), k = classify(px,py), nz = vnoise(px*.4,py*.4);
+    if(k.sd > 0) c.set('#8f9d84').lerp(new THREE.Color('#6f8a86'),smooth(0,2,k.sd));
+    else if(k.sd > -.32) c.set('#e5d6af');
+    else if(k.park) c.set(nz > .5 ? '#6aa24d' : '#76ad55');
+    else if(k.km < CITY_KM) c.set('#a9a8a4').lerp(new THREE.Color('#9e9d99'), nz*.6).lerp(new THREE.Color('#b7c98a'), smooth(CITY_KM-2,CITY_KM+1,k.km));
+    else { const cell = hash(Math.floor(px/7+500),Math.floor(py/7+500)); c.set(FIELDS[Math.floor(cell*97)%FIELDS.length]).lerp(new THREE.Color('#8fbf5e'), nz*.35); }
+    c.offsetHSL(0,0,(hash(i,9)-.5)*.02);
+    for(let j=0;j<3;j++){ col[(i+j)*3] = c.r; col[(i+j)*3+1] = c.g; col[(i+j)*3+2] = c.b; }
+  }
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3)); geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo,new THREE.MeshStandardMaterial({ vertexColors:true, flatShading:true, roughness:.95, envMapIntensity:.35 }));
+  mesh.receiveShadow = true; world.add(mesh);
+  const water = new THREE.Mesh(new THREE.IcosahedronGeometry(R-.06,40),new THREE.MeshStandardMaterial({ color:'#93b6b2', roughness:.2, metalness:.05, transparent:true, opacity:.88, envMapIntensity:.8 }));
+  water.receiveShadow = true; world.add(water); planetWater = water;
+  const atm = new THREE.Mesh(new THREE.SphereGeometry(R*1.09,64,48),new THREE.ShaderMaterial({ transparent:true, depthWrite:false, side:THREE.BackSide, blending:THREE.AdditiveBlending,
+    uniforms:{ c:{ value:new THREE.Color('#ffffff') }, k:{ value:.55 } },
+    vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 c;uniform float k;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.-abs(dot(vN,vV)),2.6);gl_FragColor=vec4(c*f*k,f*k);}' }));
+  scene.add(atm); atmosphere = atm;
+}
+let planetWater = null, atmosphere = null;
+
+// Cinta sobre la esfera siguiendo una polilínea en espacio P
+function ribbon(Ppts,width,lift,mat,uScale=0){
+  const pts = Ppts.map(p => pToDir(p[0],p[1])), pos = [], uv = [], idx = [], t = V3(), side = V3(), q = V3(); let acc = 0;
+  for(let i=0;i<pts.length;i++){
+    const n = pts[i]; t.subVectors(pts[Math.min(i+1,pts.length-1)],pts[Math.max(i-1,0)]); side.crossVectors(t,n).normalize();
+    if(i) acc += pts[i].distanceTo(pts[i-1])*R;
+    for(const s of [-1,1]){ q.copy(n).multiplyScalar(R).addScaledVector(side,s*width/2).normalize().multiplyScalar(R+lift); pos.push(q.x,q.y,q.z); uv.push(s<0?0:1, uScale ? acc/uScale : 0); }
+    if(i){ const k = i*2; idx.push(k-2,k-1,k, k-1,k+1,k); }
+  }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); geo.setIndex(idx); geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo,mat); m.receiveShadow = true; world.add(m); return m;
+}
+function roadTexture(wide){
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128; const x = c.getContext('2d');
+  x.fillStyle = '#6c7078'; x.fillRect(0,0,128,128);
+  x.fillStyle = '#c9c3b6'; x.fillRect(0,0,8,128); x.fillRect(120,0,8,128);
+  if(wide){ x.fillStyle = '#7fae5c'; x.fillRect(52,0,24,128); x.fillStyle = '#f2efe6';
+    for(const lx of [24,38,90,104]) for(let y=0;y<128;y+=32) x.fillRect(lx,y,2,16);
+    x.fillStyle = '#5b5f66'; x.fillRect(44,0,3,128); x.fillRect(81,0,3,128); }
+  else { x.fillStyle = '#f2efe6'; for(let y=0;y<128;y+=32) x.fillRect(63,y,2,16); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+function buildStreets(){
+  const wideT = roadTexture(true), normT = roadTexture(false);
+  const mk = t => new THREE.MeshStandardMaterial({ map:t, roughness:.9, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2, envMapIntensity:.3 });
+  const wideM = mk(wideT), normM = mk(normT);
+  for(const r of ROADS) for(const piece of r.pieces){ ribbon(piece, r.w, .012, r.kind==='wide' ? wideM : normM, r.kind==='wide' ? .9 : .6); }
+  ribbon(RIACH_DRAW,.62,.006,M('#a89d86',{ polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-1 }));
+  ribbon(RIACH_DRAW,.44,.02,new THREE.MeshStandardMaterial({ color:'#5f8582', roughness:.4, metalness:0, envMapIntensity:.5, polygonOffset:true, polygonOffsetFactor:-3, polygonOffsetUnits:-3 }));
+}
+
+/* ==========================================================================
+   Ciudad: manzanas, árboles y faroles (instanciados)
+   ========================================================================== */
+const CELL = 1.55, rand = rng(20261027);
+const nearLine = (lines,px,py) => lines.some(([pts,hw]) => polyDist(pts,px,py).d*U < hw);
+function windowTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), r = rng(3);
+  x.fillStyle = '#000'; x.fillRect(0,0,64,64);
+  for(let i=0;i<4;i++) for(let j=0;j<6;j++) if(r() < .6){ x.fillStyle = r() < .5 ? '#ffdca0' : '#ffbf66'; x.fillRect(6+i*14,6+j*10,7,5); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+let buildingMat = null, lampMat = null;
+function buildCity(){
+  const lines = [];
+  for(const r of ROADS) for(const piece of r.pieces) lines.push([piece, r.w/2+.1]);
+  lines.push([RIACH, .42]);
+  const items = [], trees = [], slabs = [];
+  const tone = ['#f3ece0','#f7f4ee','#e8e1d4','#ddd5c6','#f3ece0','#f7f4ee','#e9cfae','#d7a487','#cfd9de'];
+  for(let gx=-104; gx<=104; gx+=CELL) for(let gy=-104; gy<=104; gy+=CELL){
+    const th = Math.hypot(gx,gy); if(th > 100) continue;
+    const k = classify(gx,gy); if(k.sd > -.4) continue;
+    if(k.park){ if(rand() < .55) trees.push([gx+(rand()-.5)*CELL, gy+(rand()-.5)*CELL, rand() < .2, .8+rand()*.5]); if(rand() < .5) trees.push([gx+(rand()-.5)*CELL, gy+(rand()-.5)*CELL, rand() < .15, .8+rand()*.4]); continue; }
+    if(k.km > CITY_KM + 3*rand()){ if(rand() < .05) trees.push([gx,gy,false,1.1+rand()*.5]); if(rand() < .012) items.push({ px:gx, py:gy, w:.28, d:.2, h:.16, c:'#f3ece0', roof:true }); continue; }
+    // Cada celda es una manzana: vereda clara y edificios encima; entre manzanas queda la calle
+    if(nearLine(lines,gx,gy) || PLACES.some(p => placeDistU(p,gx,gy) < p.foot+.3)) continue;
+    slabs.push({ px:gx, py:gy, w:CELL*U*.84, d:CELL*U*.84, h:.03, c:'#ebe5d9' });
+    if(rand() < .07){ for(let q=0;q<3;q++) trees.push([gx+(rand()-.5)*CELL*.6, gy+(rand()-.5)*CELL*.6, rand() < .5, .7]); continue; }
+    const split = th < 28 ? 2 : 1, sub = CELL/split;
+    for(let a=0;a<split;a++) for(let b=0;b<split;b++){
+      const px = gx+(a-(split-1)/2)*sub*.84, py = gy+(b-(split-1)/2)*sub*.84;
+      if(PLACES.some(p => placeDistU(p,px,py) < p.foot+.45)) continue;
+      const [kx,ky] = pToKm(px,py), center = Math.exp(-th/15), madero = Math.hypot(kx-MADERO.x,ky-MADERO.y) < MADERO.r;
+      const size = sub*U*(split > 1 ? .66 : .62)*(.88+rand()*.16);
+      let h = .1 + rand()**2*(.16 + .85*center) + (k.km > 9 ? -.03 : 0), c = tone[Math.floor(rand()*tone.length)];
+      if(madero){ h = 1.0+rand()*1.2; c = rand() < .5 ? '#8eaabd' : '#b8c8d4'; }
+      items.push({ px, py, w:size, d:size*(.82+rand()*.2), h, c });
+    }
+    if(split === 1 && rand() < .3) trees.push([gx+CELL*.36, gy+CELL*.36, rand() < .45, .62]);
+  }
+  // Árboles en las veredas de las avenidas (con jacarandás, que florecen en noviembre)
+  for(const r of ROADS) for(const piece of r.pieces) for(let i=2;i<piece.length-2;i+=3){
+    const a = piece[i-1], b = piece[i+1], dx = b[0]-a[0], dy = b[1]-a[1], l = Math.hypot(dx,dy) || 1, off = (r.w/2+.13)/U;
+    for(const s of [-1,1]) if(rand() < .7) trees.push([piece[i][0]-dy/l*off*s, piece[i][1]+dx/l*off*s, rand() < .5, .62]);
+  }
+  // Edificios
+  const geo = B(1,1,1); geo.translate(0,.5,0);
+  const uv = geo.attributes.uv; for(let i=8;i<16;i++) uv.setXY(i,.03,.97);
+  buildingMat = new THREE.MeshStandardMaterial({ roughness:.88, envMapIntensity:.45, emissive:'#ffcf8a', emissiveMap:windowTexture(), emissiveIntensity:0 });
+  const im = new THREE.InstancedMesh(geo,buildingMat,items.length), m = new THREE.Matrix4(), q = new THREE.Quaternion(), basis = new THREE.Matrix4(), col = new THREE.Color();
+  items.forEach((it,i) => { const f = frameAt(it.px,it.py); basis.makeBasis(f.e,f.n,f.s); q.setFromRotationMatrix(basis);
+    m.compose(f.n.clone().multiplyScalar(R-.01), q, V3(it.w,it.h,it.d)); im.setMatrixAt(i,m); im.setColorAt(i,col.set(it.c)); });
+  im.castShadow = im.receiveShadow = true; world.add(im);
+  const sim = new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({ roughness:.95, envMapIntensity:.3 }),slabs.length);
+  slabs.forEach((it,i) => { const f = frameAt(it.px,it.py); basis.makeBasis(f.e,f.n,f.s); q.setFromRotationMatrix(basis);
+    m.compose(f.n.clone().multiplyScalar(R-.01), q, V3(it.w,it.h,it.d)); sim.setMatrixAt(i,m); sim.setColorAt(i,col.set(it.c)); });
+  sim.receiveShadow = true; world.add(sim);
+  // Árboles: copa + tronco
+  const crownG = new THREE.IcosahedronGeometry(.13,0); crownG.translate(0,.2,0);
+  const trunkG = Cy(.018,.024,.12,5); trunkG.translate(0,.06,0);
+  const crowns = new THREE.InstancedMesh(crownG,new THREE.MeshStandardMaterial({ roughness:.9, flatShading:true, envMapIntensity:.4 }),trees.length);
+  const trunks = new THREE.InstancedMesh(trunkG,M('#7b5d45'),trees.length);
+  const greens = ['#5f9a45','#6fa84f','#4f8a3f','#7bb35a','#689f48'], jac = ['#9a7fd0','#a78bdc','#8f74c6'];
+  trees.forEach(([px,py,purple,s],i) => { const f = frameAt(px,py); basis.makeBasis(f.e,f.n,f.s); q.setFromRotationMatrix(basis);
+    const sc = s*(.85+rand()*.3); m.compose(f.n.clone().multiplyScalar(R), q, V3(sc,sc*(.9+rand()*.3),sc)); crowns.setMatrixAt(i,m); trunks.setMatrixAt(i,m);
+    crowns.setColorAt(i,col.set(purple ? jac[i%3] : greens[i%5])); });
+  crowns.castShadow = trunks.castShadow = true; crowns.receiveShadow = true; world.add(crowns,trunks);
+  // Faroles a lo largo de las avenidas (se encienden de noche)
+  const lamps = [];
+  for(const r of ROADS) for(const piece of r.pieces) for(let i=1;i<piece.length-1;i+=4){
+    const a = piece[i-1], b = piece[i+1], dx = b[0]-a[0], dy = b[1]-a[1], l = Math.hypot(dx,dy) || 1, off = (r.w/2+.04)/U;
+    for(const s of [-1,1]) lamps.push([piece[i][0]-dy/l*off*s, piece[i][1]+dx/l*off*s]);
+  }
+  const postG = Cy(.006,.008,.14,4); postG.translate(0,.07,0); const bulbG = new THREE.SphereGeometry(.022,6,4); bulbG.translate(0,.145,0);
+  const merged = mergeGeometries([postG.toNonIndexed(), bulbG.toNonIndexed()]);
+  lampMat = new THREE.MeshStandardMaterial({ color:'#5b5f66', emissive:'#ffd38a', emissiveIntensity:0, roughness:.6 });
+  const lim = new THREE.InstancedMesh(merged,lampMat,lamps.length);
+  lamps.forEach(([px,py],i) => { const f = frameAt(px,py); basis.makeBasis(f.e,f.n,f.s); q.setFromRotationMatrix(basis); m.compose(f.n.clone().multiplyScalar(R), q, V3(1,1,1)); lim.setMatrixAt(i,m); });
+  world.add(lim);
+  return { buildings: items.length, trees: trees.length };
+}
+
+/* ==========================================================================
+   Monumentos sobre el planeta
+   ========================================================================== */
+const hitBoxes = [];
+const ringMark = new THREE.Mesh(new THREE.RingGeometry(1,1.08,64),new THREE.MeshBasicMaterial({ color:'#f2b134', transparent:true, opacity:.9, depthWrite:false, side:THREE.DoubleSide }));
+ringMark.visible = false; world.add(ringMark);
+function placeMonuments(){
+  PLACES.forEach((p,i) => {
+    p.idx = i; const f = frameAt(...p.P); p.f = f;
+    const g = mergeStatic(build[p.id]()); g.userData.place = p;
+    g.position.copy(f.n).multiplyScalar(R);
+    g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(f.e,f.n,f.s)); g.rotateY(YAW[p.face]);
+    world.add(g); p.obj = g;
+    const plaza = new THREE.Mesh(Cy(p.foot+.32,p.foot+.34,.03,40),M('#e4ded2')); plaza.position.y = .005; plaza.receiveShadow = true; g.add(plaza);
+    const hb = new THREE.Mesh(B(p.foot*1.9,Math.max(1,p.top),p.foot*1.9),new THREE.MeshBasicMaterial({ visible:false })); hb.position.y = Math.max(1,p.top)/2; hb.userData.place = p; g.add(hb); hitBoxes.push(hb);
+    p.front = f.s.clone().multiplyScalar(Math.cos(YAW[p.face])).addScaledVector(f.e,Math.sin(YAW[p.face]));
+    p.anchor = f.n.clone().multiplyScalar(R + p.top + .35);
+  });
+}
+
+/* ==========================================================================
+   Vida: colectivos y taxis, veleros, tango
+   ========================================================================== */
+const movers = [];
+function pathFrom(Ppts){ const pts = Ppts.map(p => pToDir(p[0],p[1]).multiplyScalar(R)), cum = [0]; for(let i=1;i<pts.length;i++) cum.push(cum[i-1]+pts[i].distanceTo(pts[i-1])); return { pts, cum, len: cum[cum.length-1] }; }
+function samplePath(P,s,out){ s = clamp(s,0,P.len-1e-4); let lo = 0, hi = P.cum.length-1; while(hi-lo > 1){ const mid = (lo+hi)>>1; if(P.cum[mid] <= s) lo = mid; else hi = mid; }
+  const k = (s-P.cum[lo])/((P.cum[hi]-P.cum[lo])||1); out.p.lerpVectors(P.pts[lo],P.pts[hi],k); out.t.subVectors(P.pts[hi],P.pts[lo]).normalize(); return out; }
+function makeColectivo(color){ const g = new THREE.Group(); add(g,B(.34,.11,.13),M(color),0,.075,0); add(g,B(.34,.03,.135),M('#f4f2ee'),0,.115,0); add(g,B(.02,.06,.11),M('#2c3138'),.17,.08,0);
+  for(const x of [-.1,.1]) for(const z of [-.065,.065]) add(g,Cy(.024,.024,.02,8),M('#1d1f22'),x,.024,z,Math.PI/2); return g; }
+function makeTaxi(){ const g = new THREE.Group(); add(g,B(.22,.07,.11),M('#1d1f22'),0,.05,0); add(g,B(.13,.05,.1),M('#f5c518'),-.01,.105,0);
+  for(const x of [-.07,.07]) for(const z of [-.055,.055]) add(g,Cy(.02,.02,.018,8),M('#111'),x,.02,z,Math.PI/2); return g; }
+function spawnTraffic(){
+  const cols = ['#d62f3a','#2a62b8','#f0b429','#2f9e62','#e46b2c','#7b4aa8','#1d8ea3'];
+  for(const r of ROADS) for(const piece of r.pieces){ const P = pathFrom(piece); if(P.len < 1.2) continue;
+    const lanes = r.kind === 'wide' ? [.24,-.24,.14,-.14] : [.06,-.06];
+    const n = Math.max(1, Math.round(P.len/(r.kind === 'wide' ? 1.1 : 2.2)));
+    for(let i=0;i<n;i++){ const lane = lanes[i%lanes.length], obj = rand() < .45 ? makeTaxi() : makeColectivo(cols[Math.floor(rand()*cols.length)]); world.add(obj);
+      movers.push({ kind:'car', P, s: rand()*P.len, v:(.45+rand()*.35)*(lane > 0 ? 1 : -1), lane, obj }); } }
+}
+function makeSail(){ const g = new THREE.Group(); add(g,B(.34,.06,.11),M('#f7f5ef'),0,.03,0); add(g,Cy(.006,.006,.42,5),M('#6b6560'),.02,.27,0);
+  const s = new THREE.Shape(); s.moveTo(0,0); s.lineTo(0,.34); s.lineTo(.2,0); s.closePath(); add(g,new THREE.ShapeGeometry(s),M('#ffffff',{ side:THREE.DoubleSide }),.025,.08,0); return g; }
+function spawnBoats(){
+  for(let i=0;i<7;i++){ const idx = 6 + Math.floor((i/7)*(COAST.length-14)), a = COAST[idx], b = COAST[idx+1], dx = b[0]-a[0], dy = b[1]-a[1], l = Math.hypot(dx,dy), off = 2.5+rand()*7;
+    const pts = []; for(let k=-8;k<=8;k++) pts.push([a[0]-dy/l*off+dx/l*k*.9, a[1]+dx/l*off+dy/l*k*.9]);
+    const P = pathFrom(pts); P.pts.forEach(p => p.setLength(R-.06)); const obj = makeSail(); world.add(obj);
+    movers.push({ kind:'boat', P, s: rand()*P.len, v:.12+rand()*.1, lane:0, obj, bob: rand()*6 }); }
+}
+/* ---------- Ferry al Uruguay y un portacontenedores ---------- */
+function makeFerry(){ const g = new THREE.Group(), wh = M('#f7f7f4'), blue = M('#1f4fa0'), dk = M('#2d333b');
+  add(g,B(.9,.13,.26),wh,0,.06,0); add(g,B(.92,.04,.27),blue,0,.05,0); add(g,B(.55,.13,.22),wh,-.05,.19,0); add(g,B(.5,.03,.225),dk,-.05,.2,0);
+  add(g,B(.2,.09,.18),wh,.1,.29,0); add(g,B(.07,.12,.08),blue,-.25,.31,0); return g; }
+function makeCargo(){ const g = new THREE.Group(), hull = M('#8e2f2a'), wh = M('#f1f1ee'), cols = ['#2f6fae','#e2a12f','#3aa776','#c9452f','#7b4fa0'];
+  add(g,B(1.0,.1,.22),hull,0,.04,0); add(g,B(.16,.2,.2),wh,-.4,.18,0);
+  for(let i=0;i<5;i++) for(let j=0;j<2;j++) add(g,B(.13,.06,.09),M(cols[(i+j*2)%cols.length]),-.22+i*.14,.12+j*.06,0);
+  return g; }
+function spawnShips(){
+  // el ferry sale de la Dársena Norte y cruza el río hacia la otra cara del planeta
+  const c0 = llToP(-34.5900,-58.3590), { i } = polyDist(COAST,c0[0],c0[1]), a = COAST[i], b = COAST[i+1], dx = b[0]-a[0], dy = b[1]-a[1], l = Math.hypot(dx,dy), nx = -dy/l, ny = dx/l;
+  const pts = []; for(let k=0;k<=60;k++){ const d = 1.6 + k*2.2; pts.push([c0[0]+nx*d+dx/l*k*.35, c0[1]+ny*d+dy/l*k*.35]); }
+  const P = pathFrom(pts); P.pts.forEach(p => p.setLength(R-.06)); const ferry = makeFerry(); world.add(ferry);
+  movers.push({ kind:'ship', P, s:0, v:.55, lane:0, obj:ferry, bob:1, turn:true });
+  // portacontenedores que entra y sale del puerto bordeando la costa
+  const c1 = llToP(-34.5750,-58.3800), j = polyDist(COAST,c1[0],c1[1]).i, pts2 = [];
+  for(let k=-14;k<=14;k++){ const q = COAST[clamp(j+k,1,COAST.length-2)], r2 = COAST[clamp(j+k+1,1,COAST.length-2)], ex = r2[0]-q[0], ey = r2[1]-q[1], el = Math.hypot(ex,ey)||1; pts2.push([q[0]-ey/el*4.5, q[1]+ex/el*4.5]); }
+  const P2 = pathFrom(pts2); P2.pts.forEach(p => p.setLength(R-.06)); const cargo = makeCargo(); world.add(cargo);
+  movers.push({ kind:'ship', P:P2, s:P2.len*.3, v:.18, lane:0, obj:cargo, bob:3, turn:true });
+}
+
+/* ---------- Gente: caminan por las veredas de las avenidas y dan vueltas por las plazas ---------- */
+const people = []; let bodyIM = null, headIM = null;
+function spawnPeople(){
+  for(const r of ROADS) for(const piece of r.pieces){ const P = pathFrom(piece), n = Math.round(P.len*1.4);
+    for(let i=0;i<n;i++) people.push({ kind:'walk', P, s:rand()*P.len, v:(rand() < .5 ? -1 : 1)*(.07+rand()*.06), lane:(rand() < .5 ? -1 : 1)*(r.w/2+.07+rand()*.03) }); }
+  for(const p of PLACES){ const n = 3 + Math.round(p.foot*3); for(let i=0;i<n;i++) people.push({ kind:'plaza', p, a:rand()*Math.PI*2, rad:p.foot+.1+rand()*.17, w:(rand() < .5 ? -1 : 1)*(.06+rand()*.08) }); }
+  const bodyG = Cy(.013,.019,.075,6); bodyG.translate(0,.038,0); const headG = new THREE.SphereGeometry(.015,6,4); headG.translate(0,.09,0);
+  bodyIM = new THREE.InstancedMesh(bodyG,new THREE.MeshStandardMaterial({ roughness:.8 }),people.length); headIM = new THREE.InstancedMesh(headG,M('#e2b893'),people.length);
+  const cols = ['#d9483b','#2f6fae','#f2b134','#3aa776','#7b4fa0','#1d1f22','#f4f1ea','#e56aa6','#27a3a1'], c = new THREE.Color();
+  people.forEach((_,i) => bodyIM.setColorAt(i,c.set(cols[i%cols.length])));
+  bodyIM.castShadow = true; world.add(bodyIM,headIM);
+}
+const _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _pp = V3(), _pd = V3(), _one = V3(1,1,1);
+function stepPeople(dt,t){
+  if(!bodyIM) return;
+  people.forEach((m,i) => {
+    if(m.kind === 'walk'){
+      m.s += m.v*dt; const L = m.P.len; if(m.s > L){ m.s = 2*L-m.s; m.v = -m.v; } else if(m.s < 0){ m.s = -m.s; m.v = -m.v; }
+      samplePath(m.P,m.s,_sp); _n.copy(_sp.p).normalize(); _pd.copy(_sp.t).multiplyScalar(Math.sign(m.v));
+      _side.crossVectors(_pd,_n).normalize(); _pp.copy(_sp.p).addScaledVector(_side,Math.sign(m.v)*m.lane);
+    } else {
+      m.a += m.w*dt/m.rad; const f = m.p.f, ca = Math.cos(m.a), sa = Math.sin(m.a);
+      _pp.copy(f.n).multiplyScalar(R).addScaledVector(f.e,ca*m.rad).addScaledVector(f.s,sa*m.rad); _n.copy(_pp).normalize();
+      _pd.copy(f.e).multiplyScalar(-sa*Math.sign(m.w)).addScaledVector(f.s,ca*Math.sign(m.w));
+    }
+    _pd.addScaledVector(_n,-_pd.dot(_n)).normalize(); _side.crossVectors(_pd,_n);
+    _pp.addScaledVector(_n,.02 + Math.abs(Math.sin(t*9+i))*.008);
+    _bm.makeBasis(_pd,_n,_side); _pq.setFromRotationMatrix(_bm); _pm.compose(_pp,_pq,_one); bodyIM.setMatrixAt(i,_pm); headIM.setMatrixAt(i,_pm);
+  });
+  bodyIM.instanceMatrix.needsUpdate = headIM.instanceMatrix.needsUpdate = true;
+}
+
+/* ---------- Subte: líneas que flotan sobre la ciudad (en la realidad van bajo tierra) ---------- */
+let subteGroup = null, subteOn = false;
+const SUB_LIFT = .4;
+function buildSubte(){
+  subteGroup = new THREE.Group(); subteGroup.visible = false; world.add(subteGroup);
+  const stG = Cy(.1,.1,.08,16), stRing = new THREE.TorusGeometry(.105,.025,6,20), stMat = new THREE.MeshStandardMaterial({ color:'#ffffff', emissive:'#ffffff', emissiveIntensity:.25 });
+  for(const L of SUBTE){
+    const P = densifyP(L.st,.04), pts = P.map(p => pToDir(p[0],p[1]).multiplyScalar(R+SUB_LIFT));
+    L.mat = new THREE.MeshStandardMaterial({ color:L.c, emissive:L.c, emissiveIntensity:.35, roughness:.4 });
+    subteGroup.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), pts.length*2, .075, 8, false), L.mat));
+    for(const s of L.st){ const n = pToDir(...llToP(...s)), pos = n.clone().multiplyScalar(R+SUB_LIFT);
+      const st = new THREE.Mesh(stG,stMat); st.position.copy(pos); st.quaternion.setFromUnitVectors(V3(0,1,0),n); subteGroup.add(st);
+      const ring = new THREE.Mesh(stRing,L.mat); ring.position.copy(pos); ring.quaternion.setFromUnitVectors(V3(0,0,1),n); subteGroup.add(ring); }
+    const path = pathFrom(P); path.pts.forEach(p => p.setLength(R+SUB_LIFT+.03));
+    for(let k=0;k<2;k++){ const tr = new THREE.Group(); add(tr,B(.42,.12,.15),L.mat); add(tr,B(.36,.035,.155),M('#fdfbf6'),0,.02,0); subteGroup.add(tr);
+      movers.push({ kind:'subte', P:path, s:path.len*(k ? .7 : .2), v:k ? -.6 : .6, lane:0, obj:tr }); }
+  }
+}
+function setSubte(v){
+  subteOn = v; if(subteGroup) subteGroup.visible = v; document.body.classList.toggle('subte-on',v);
+  if(buildingMat){ buildingMat.transparent = v; buildingMat.opacity = v ? .28 : 1; buildingMat.depthWrite = !v; buildingMat.needsUpdate = true; }
+  $('subteBtn').setAttribute('aria-pressed',String(v)); $('legend').hidden = !v; if(v){ $('help').hidden = true; $('helpBtn').setAttribute('aria-pressed','false'); }
+  renderTexts();
+}
+
+const _sp = { p:V3(), t:V3() }, _side = V3(), _n = V3(), _bm = new THREE.Matrix4();
+function stepMovers(dt,t){
+  for(const m of movers){
+    if(m.kind === 'subte' && !subteOn) continue;
+    m.s += m.v*dt; const L = m.P.len;
+    if(m.kind === 'subte' || m.kind === 'ship'){ if(m.s > L){ m.s = 2*L-m.s; m.v = -m.v; } else if(m.s < 0){ m.s = -m.s; m.v = -m.v; } }   // va y vuelve entre cabeceras
+    else { if(m.s > L) m.s -= L; if(m.s < 0) m.s += L; }
+    samplePath(m.P,m.s,_sp); _n.copy(_sp.p).normalize(); const dir = _sp.t.clone().multiplyScalar(Math.sign(m.v)); dir.addScaledVector(_n,-dir.dot(_n)).normalize();
+    _side.crossVectors(dir,_n); m.obj.position.copy(_sp.p).addScaledVector(_side,m.lane);
+    if(m.kind === 'boat' || m.kind === 'ship') m.obj.position.addScaledVector(_n,Math.sin(t*1.6+m.bob)*.015);
+    else if(m.kind === 'car') m.obj.position.addScaledVector(_n,.012);
+    _bm.makeBasis(dir,_n,_side);
+    if(m.turn){ _pq.setFromRotationMatrix(_bm); m.obj.quaternion.slerp(_pq,Math.min(1,dt*1.5)); } else m.obj.quaternion.setFromRotationMatrix(_bm);   // los barcos giran despacio al dar la vuelta
+    const edge = Math.min(m.s, L-m.s), sc = m.kind === 'car' ? smooth(0,.35,edge) : 1; m.obj.scale.setScalar(Math.max(.001,sc));
+  }
+}
+
+/* ==========================================================================
+   Cámara: vista general (plato giratorio) y foco en un lugar
+   ========================================================================== */
+const ov = { az:0, el:.34, dist:60 };
+const fo = { place:null, yaw:0, tilt:1.0, dist:8 };
+let mode = 'over', spin = !REDUCED, flight = null, curLook = V3(), viewShift = { x:0, y:0 };
+const HOME = { az:0, el:.22 };
+function homeDist(){ const vf = camera.fov*D2R/2, hf = Math.atan(Math.tan(vf)*camera.aspect); return (R*1.15)/Math.sin(Math.min(vf,hf)); }
+function poseOver(){ const se = Math.sin(ov.el), ce = Math.cos(ov.el), sa = Math.sin(ov.az), ca = Math.cos(ov.az);
+  const dir = V3(se*sa,-se*ca,ce); return { pos: dir.multiplyScalar(ov.dist), look: V3(), up: V3(-ce*sa,ce*ca,se) }; }
+function poseFocus(){ const p = fo.place, f = p.f, look = f.n.clone().multiplyScalar(R + p.top*.38);
+  const h = f.s.clone().multiplyScalar(Math.cos(fo.yaw)).addScaledVector(f.e,Math.sin(fo.yaw));
+  const narrow = camera.aspect < 1 ? .85/Math.max(.45,camera.aspect) : 1;   // en pantallas verticales, alejarse un poco más
+  const off = f.n.clone().multiplyScalar(Math.cos(fo.tilt)).addScaledVector(h,Math.sin(fo.tilt)).multiplyScalar(fo.dist*narrow);
+  return { pos: look.clone().add(off), look, up: f.n.clone() }; }
+const poseNow = () => ({ pos: camera.position.clone(), look: curLook.clone(), up: camera.up.clone() });
+const easeIO = x => x < .5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+function flyTo(newMode,dur=1.6){ flight = { from: poseNow(), t:0, dur: REDUCED ? .01 : dur }; mode = newMode; }
+function applyPose(P){ camera.position.copy(P.pos); camera.up.copy(P.up); camera.lookAt(P.look); curLook.copy(P.look); }
+function stepCamera(dt){
+  if(spin && !dragging && !flight){ if(mode === 'over') ov.az += dt*.045; else fo.yaw += dt*.06; }
+  const target = mode === 'over' ? poseOver() : poseFocus();
+  if(flight){
+    flight.t += dt/flight.dur; const k = easeIO(Math.min(1,flight.t)), A = flight.from;
+    const ra = A.pos.length(), rb = target.pos.length(), da = A.pos.clone().normalize(), db = target.pos.clone().normalize(), ang = da.angleTo(db);
+    const dir = ang < 1e-4 ? db : da.clone().multiplyScalar(Math.sin((1-k)*ang)).addScaledVector(db,Math.sin(k*ang)).divideScalar(Math.sin(ang));
+    const r = lerp(ra,rb,k) + Math.sin(Math.PI*k)*Math.min(14,ang*12);
+    applyPose({ pos: dir.multiplyScalar(r), look: A.look.clone().lerp(target.look,k), up: A.up.clone().lerp(target.up,k).normalize() });
+    if(flight.t >= 1) flight = null;
+  } else applyPose(target);
+  // Desplazar la vista cuando la ficha ocupa parte de la pantalla
+  const wide = innerWidth > 760, open = document.body.classList.contains('panel-open') && !document.body.classList.contains('panel-min');
+  const tx = open && wide ? 200 : 0, ty = open && !wide ? innerHeight*.26 : 0;
+  viewShift.x += (tx-viewShift.x)*Math.min(1,dt*5); viewShift.y += (ty-viewShift.y)*Math.min(1,dt*5);
+  if(Math.abs(viewShift.x) + Math.abs(viewShift.y) > .5) camera.setViewOffset(innerWidth,innerHeight,viewShift.x,viewShift.y,innerWidth,innerHeight); else camera.clearViewOffset();
+}
+
+/* ---------- Puntero, rueda, pellizco ---------- */
+let dragging = false, downAt = null, moved = 0; const pointers = new Map(); let pinch0 = 0;
+canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); document.body.classList.add('touched'); pointers.set(e.pointerId,{ x:e.clientX, y:e.clientY }); downAt = { x:e.clientX, y:e.clientY }; moved = 0;
+  if(pointers.size === 2){ const [a,b] = [...pointers.values()]; pinch0 = Math.hypot(a.x-b.x,a.y-b.y); } });
+canvas.addEventListener('pointermove', e => { const prev = pointers.get(e.pointerId); if(!prev) return;
+  const dx = e.clientX-prev.x, dy = e.clientY-prev.y; pointers.set(e.pointerId,{ x:e.clientX, y:e.clientY }); moved += Math.abs(dx)+Math.abs(dy);
+  if(pointers.size === 2){ const [a,b] = [...pointers.values()], d = Math.hypot(a.x-b.x,a.y-b.y); if(pinch0) zoom(pinch0/d); pinch0 = d; return; }
+  if(moved > 4){ dragging = true; canvas.classList.add('dragging'); if(flight) return; stopTour();
+    if(mode === 'over'){ ov.az -= dx*.005; ov.el = clamp(ov.el - dy*.005, 0, 1.4); } else { fo.yaw -= dx*.006; fo.tilt = clamp(fo.tilt - dy*.005, .2, 1.3); } } });
+const endPointer = e => { pointers.delete(e.pointerId); if(pointers.size < 2) pinch0 = 0;
+  if(!pointers.size){ if(moved <= 4 && downAt) pick(e); dragging = false; canvas.classList.remove('dragging'); downAt = null; } };
+canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(e.deltaY*.0012)); }, { passive:false });
+function zoom(f){ if(mode === 'over') ov.dist = clamp(ov.dist*f, R*1.55, homeDist()*1.7); else fo.dist = clamp(fo.dist*f, 2.5, 26); }
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function pick(e){ const r = canvas.getBoundingClientRect(); ndc.set((e.clientX-r.left)/r.width*2-1, -(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(ndc,camera);
+  const hit = ray.intersectObjects(hitBoxes,false)[0]; if(hit) select(hit.object.userData.place.id); }
+
+/* ==========================================================================
+   Interfaz
+   ========================================================================== */
+const UI = {
+ es:{ brandSub:'en miniatura', places:'Lugares', tour:'Recorrido', tourStop:'Detener', listTitle:'{n} lugares en la maqueta', hint:'Arrastrá para girar · tocá un lugar para acercarte',
+   credit:'Inspirado en <a href="https://javierbalvin-zgz.github.io/turigoza/" target="_blank" rel="noopener">Turigoza</a> · fotos de Wikimedia Commons',
+   go:'Cómo llegar', maps:'Google Maps', web:'Web', prev:'Anterior', next:'Siguiente', close:'Cerrar ficha', minimize:'Minimizar ficha', expand:'Desplegar ficha', tip:'Dato porteño', photo:'Foto',
+   home:'Vista general', night:'Modo noche', day:'Modo día', pause:'Pausar el giro', resume:'Reanudar el giro', help:'Atajos de teclado', lang:'Cambiar idioma', canvas:'Maqueta 3D de Buenos Aires. Arrastrá para girarla.',
+   subte:'Mostrar el Subte', subteHide:'Ocultar el Subte', subteTitle:'Subte de Buenos Aires', subteNote:'En la maqueta las líneas flotan sobre la ciudad para que se vean; en la realidad van bajo tierra.',
+   keys:[['Arrastrar','Girar el planeta o el lugar elegido'],['Rueda','Acercar o alejar'],['← →','Lugar anterior o siguiente'],['N','Día o noche'],['S','Mostrar el Subte'],['Espacio','Pausar el giro'],['H','Vista general'],['Esc','Cerrar la ficha']], loadErr:'Tu navegador no puede mostrar la maqueta 3D' },
+ en:{ brandSub:'in miniature', places:'Places', tour:'Take the tour', tourStop:'Stop', listTitle:'{n} places on the model', hint:'Drag to spin · tap a place to get closer',
+   credit:'Inspired by <a href="https://javierbalvin-zgz.github.io/turigoza/" target="_blank" rel="noopener">Turigoza</a> · photos from Wikimedia Commons',
+   go:'Get directions', maps:'Google Maps', web:'Website', prev:'Previous', next:'Next', close:'Close card', minimize:'Minimise card', expand:'Expand card', tip:'Local tip', photo:'Photo',
+   home:'Overview', night:'Night mode', day:'Day mode', pause:'Pause spinning', resume:'Resume spinning', help:'Keyboard shortcuts', lang:'Change language', canvas:'3D model of Buenos Aires. Drag to spin it.',
+   subte:'Show the Subte', subteHide:'Hide the Subte', subteTitle:'Buenos Aires Subte', subteNote:'On the model the lines float above the city so you can see them; in real life they run underground.',
+   keys:[['Drag','Spin the planet or the chosen place'],['Wheel','Zoom in or out'],['← →','Previous or next place'],['N','Day or night'],['S','Show the Subte'],['Space','Pause spinning'],['H','Overview'],['Esc','Close the card']], loadErr:'Your browser can’t display the 3D model' },
+};
+UI.pt = { brandSub:'em miniatura', places:'Lugares', tour:'Fazer o roteiro', tourStop:'Parar', listTitle:'{n} lugares na maquete', hint:'Arraste para girar · toque num lugar para chegar perto',
+   credit:'Inspirado em <a href="https://javierbalvin-zgz.github.io/turigoza/" target="_blank" rel="noopener">Turigoza</a> · fotos do Wikimedia Commons',
+   go:'Como chegar', maps:'Google Maps', web:'Site', prev:'Anterior', next:'Próximo', close:'Fechar ficha', minimize:'Minimizar ficha', expand:'Abrir ficha', tip:'Dica portenha', photo:'Foto',
+   home:'Visão geral', night:'Modo noite', day:'Modo dia', pause:'Pausar o giro', resume:'Retomar o giro', help:'Atalhos de teclado', lang:'Mudar idioma', canvas:'Maquete 3D de Buenos Aires. Arraste para girar.',
+   subte:'Mostrar o metrô (Subte)', subteHide:'Ocultar o metrô (Subte)', subteTitle:'Metrô de Buenos Aires (Subte)', subteNote:'Na maquete as linhas flutuam sobre a cidade para serem vistas; na realidade correm debaixo da terra.',
+   keys:[['Arrastar','Girar o planeta ou o lugar escolhido'],['Roda','Aproximar ou afastar'],['← →','Lugar anterior ou próximo'],['N','Dia ou noite'],['S','Mostrar o Subte'],['Espaço','Pausar o giro'],['H','Visão geral'],['Esc','Fechar a ficha']], loadErr:'Seu navegador não consegue mostrar a maquete 3D' };
+const LANGS = ['es','en','pt'];
+let LANG = 'es'; try { const s = localStorage.getItem('baires-lang'); if(LANGS.includes(s)) LANG = s; else { const nl = navigator.language.slice(0,2); LANG = LANGS.includes(nl) ? nl : 'en'; } } catch(_){}
+const T = k => UI[LANG][k];
+let current = null, tour = null, night = false, nightK = 0, panelMin = false;
+const pad = i => String(i+1).padStart(2,'0');
+
+const labels = PLACES.map(p => { const b = document.createElement('button'); b.className = 'pin off'; b.style.setProperty('--c',CATS[p.cat].c);
+  b.innerHTML = `<b>${pad(PLACES.indexOf(p))}</b><span></span>`; b.addEventListener('click',() => select(p.id)); $('labels').appendChild(b); p.lbl = b; return b; });
+
+function renderTexts(){
+  document.documentElement.lang = LANG === 'pt' ? 'pt-BR' : LANG;
+  document.querySelectorAll('[data-t]').forEach(el => el.textContent = T(el.dataset.t));
+  $('langLbl').textContent = LANG.toUpperCase(); $('langBtn').setAttribute('aria-label',T('lang'));
+  $('listTitle').textContent = T('listTitle').replace('{n}',PLACES.length);
+  $('hint').textContent = T('hint'); $('credit').innerHTML = T('credit'); canvas.setAttribute('aria-label',T('canvas'));
+  $('homeBtn').setAttribute('aria-label',T('home')); $('helpBtn').setAttribute('aria-label',T('help'));
+  $('nightBtn').setAttribute('aria-label',night ? T('day') : T('night')); $('spinBtn').setAttribute('aria-label',spin ? T('pause') : T('resume'));
+  $('tourBtn').querySelector('[data-t]').textContent = tour ? T('tourStop') : T('tour');
+  $('subteBtn').setAttribute('aria-label',subteOn ? T('subteHide') : T('subte'));
+  $('legendTitle').textContent = T('subteTitle'); $('legendNote').textContent = T('subteNote');
+  $('legendList').innerHTML = SUBTE.map(L => '<li><span class="ln' + (L.id==='H' ? ' lt' : '') + '" style="--c:' + L.c + '">' + L.id + '</span><span><b>' + L.ends + '</b><span>' + L.year + ' · ' + L[LANG] + '</span></span></li>').join('');
+  $('helpTitle').textContent = T('help'); $('helpList').innerHTML = T('keys').map(([k,v]) => `<dt><kbd>${k}</kbd></dt><dd>${v}</dd>`).join('');
+  $('listItems').innerHTML = PLACES.map((p,i) => `<li><button data-id="${p.id}" style="--c:${CATS[p.cat].c}" ${current===p?'aria-current="true"':''}><span class="num">${pad(i)}</span><span><span class="nm">${p[LANG].name}</span><span class="sb">${p[LANG].sub}</span></span></button></li>`).join('');
+  PLACES.forEach(p => p.lbl.querySelector('span').textContent = p[LANG].name);
+  if(current) fillPanel(current);
+}
+const fileUrl = f => 'https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(f.replace(/ /g,'_'));
+const imgUrl = f => 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(f) + '?width=960';
+function fillPanel(p){
+  const t = p[LANG], cat = CATS[p.cat], i = PLACES.indexOf(p);
+  const el = $('panel'); el.style.setProperty('--c',cat.c);
+  el.innerHTML = `
+   <button class="grab" id="pGrab" aria-label="${panelMin ? T('expand') : T('minimize')}"></button>
+   <div class="p-head"><div><p class="eyebrow">${pad(i)} — ${cat[LANG]}</p><h2>${t.name}</h2><p class="p-sub">${t.sub}</p></div>
+     <div class="p-tools"><button class="icon-btn" id="pMin" aria-label="${panelMin ? T('expand') : T('minimize')}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">${panelMin ? '<path d="M6 15l6-6 6 6"/>' : '<path d="M5 12h14"/>'}</svg></button>
+     <button class="icon-btn" id="pClose" aria-label="${T('close')}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>
+   <figure class="photo"><img src="${imgUrl(p.photo.f)}" alt="${t.name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"><figcaption><span class="year">${p.year}</span><span class="yearl">${t.yearl}</span></figcaption></figure>
+   <p class="pcredit">${T('photo')}: ${p.photo.a} · <a href="${fileUrl(p.photo.f)}" target="_blank" rel="noopener">${p.photo.l} · Wikimedia Commons</a></p>
+   <div class="p-actions"><a class="btn-go" href="https://www.google.com/maps/search/?api=1&query=${p.ll[0]},${p.ll[1]}" target="_blank" rel="noopener"><span>${T('go')}</span><small>${T('maps')} ↗</small></a>
+     <a class="btn-web" href="${p.web}" target="_blank" rel="noopener">${T('web')} ↗</a></div>
+   <p class="desc">${t.desc}</p>
+   <div class="stats">${t.stats.map(([a,b]) => `<div class="stat"><b>${a}</b><span>${b}</span></div>`).join('')}</div>
+   <div class="tip"><b>${T('tip')}</b>${t.tip}</div>
+   <div class="p-nav"><button id="pPrev">← ${T('prev')}</button><span>${pad(i)} / ${pad(PLACES.length-1)}</span><button id="pNext">${T('next')} →</button></div>`;
+  $('pClose').onclick = closePanel; $('pPrev').onclick = () => { stopTour(); step(-1); }; $('pNext').onclick = () => { stopTour(); step(1); };
+  $('pMin').onclick = $('pGrab').onclick = () => { panelMin = !panelMin; document.body.classList.toggle('panel-min',panelMin); fillPanel(p); };
+}
+function select(id){
+  const p = PLACES.find(q => q.id === id); if(!p) return; current = p;
+  PLACES.forEach(q => q.lbl.classList.toggle('sel',q === p));
+  ringMark.visible = true; ringMark.position.copy(p.f.n).multiplyScalar(R+.03); ringMark.quaternion.setFromUnitVectors(V3(0,0,1),p.f.n); ringMark.scale.setScalar(p.foot+.15);
+  fo.place = p; fo.yaw = YAW[p.face] + .45; fo.tilt = .95; fo.dist = 6 + p.foot*2.6 + p.top*1.5;
+  flyTo('focus', mode === 'focus' ? 1.4 : 1.8);
+  panelMin = false; document.body.classList.remove('panel-min'); fillPanel(p); document.body.classList.add('panel-open'); $('panel').scrollTop = 0;
+  toggleList(false); renderListCurrent();
+}
+function renderListCurrent(){ document.querySelectorAll('#listItems button').forEach(b => b.toggleAttribute('aria-current',current && b.dataset.id === current.id)); }
+function closePanel(){ document.body.classList.remove('panel-open','panel-min'); stopTour(); goHome(); }
+function goHome(){ current = null; ringMark.visible = false; PLACES.forEach(q => q.lbl.classList.remove('sel')); document.body.classList.remove('panel-open','panel-min');
+  ov.az = Math.round((ov.az-HOME.az)/(Math.PI*2))*Math.PI*2 + HOME.az; ov.el = HOME.el; ov.dist = homeDist(); flyTo('over',1.6); renderListCurrent(); }
+function step(k){ const i = current ? PLACES.indexOf(current) : -1; select(PLACES[(i+k+PLACES.length)%PLACES.length].id); }
+function startTour(){ stopTour(); select(PLACES[0].id); tour = setInterval(() => step(1), 8000); $('tourBtn').setAttribute('aria-pressed','true'); renderTexts(); }
+function stopTour(){ if(!tour) return; clearInterval(tour); tour = null; $('tourBtn').setAttribute('aria-pressed','false'); renderTexts(); }
+function toggleList(force){ const l = $('list'), open = force ?? l.classList.contains('closed'); l.classList.toggle('closed',!open); $('listBtn').setAttribute('aria-expanded',String(open)); }
+function setNight(v){ night = v; document.documentElement.dataset.theme = v ? 'dark' : 'light'; $('nightBtn').setAttribute('aria-pressed',String(v)); renderTexts(); }
+function setSpin(v){ spin = v; $('spinBtn').setAttribute('aria-pressed',String(!v)); $('spinIco').innerHTML = v ? '<path d="M9 6v12M15 6v12"/>' : '<path d="M8 5l11 7-11 7z"/>'; renderTexts(); }
+
+$('brand').onclick = () => { stopTour(); goHome(); };
+$('homeBtn').onclick = () => { stopTour(); goHome(); };
+$('langBtn').onclick = () => { LANG = LANGS[(LANGS.indexOf(LANG)+1)%LANGS.length]; try { localStorage.setItem('baires-lang',LANG); } catch(_){} renderTexts(); };
+$('listBtn').onclick = () => toggleList();
+$('listItems').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if(b){ stopTour(); select(b.dataset.id); } });
+$('tourBtn').onclick = () => tour ? stopTour() : startTour();
+$('nightBtn').onclick = () => setNight(!night);
+$('spinBtn').onclick = () => setSpin(!spin);
+$('subteBtn').onclick = () => setSubte(!subteOn);
+$('helpBtn').onclick = () => { if(subteOn) setSubte(false); const h = $('help'); h.hidden = !h.hidden; $('helpBtn').setAttribute('aria-pressed',String(!h.hidden)); };
+addEventListener('keydown', e => { if(e.target.closest?.('input,textarea')) return;
+  if(e.key === 'ArrowRight'){ stopTour(); step(1); } else if(e.key === 'ArrowLeft'){ stopTour(); step(-1); }
+  else if(e.key === 'Escape'){ if(!$('list').classList.contains('closed')) toggleList(false); else if(!$('help').hidden) $('helpBtn').click(); else if(current) closePanel(); }
+  else if(e.key === 'n' || e.key === 'N') setNight(!night); else if(e.key === 's' || e.key === 'S') setSubte(!subteOn); else if(e.key === 'h' || e.key === 'H'){ stopTour(); goHome(); }
+  else if(e.key === ' ' && e.target === document.body){ e.preventDefault(); setSpin(!spin); } });
+addEventListener('pointerdown', e => { if(!e.target.closest('#list,#listBtn')) toggleList(false); });
+
+/* ---------- Etiquetas ---------- */
+const _v = V3(), _c = V3();
+function stepLabels(){
+  const W = innerWidth, H = innerHeight; camera.getWorldPosition(_c);
+  const placed = [], order = current ? [current, ...PLACES.filter(p => p !== current)] : PLACES;
+  for(const p of order){
+    const facing = p.f.n.dot(_c.clone().sub(p.anchor).normalize());
+    _v.copy(p.anchor).project(camera);
+    const x = (_v.x+1)/2*W, y = (1-_v.y)/2*H;
+    let off = facing < .12 || _v.z > 1 || (mode === 'focus' && current !== p && p.anchor.distanceTo(_c) > fo.dist*3.2);
+    // si dos etiquetas se pisan, se muestra la primera (la elegida o la de menor número)
+    if(!off && p !== current && placed.some(([qx,qy]) => Math.abs(qx-x) < 26 && Math.abs(qy-y) < 24)) off = true;
+    if(!off) placed.push([x,y]);
+    p.lbl.classList.toggle('off',off);
+    if(!off) p.lbl.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-120%)`;
+  }
+}
+
+/* ---------- Día y noche ---------- */
+const DAY = { hemi:.55, sun:2.3, moon:0, exp:1.05, water:new THREE.Color('#93b6b2') }, NIGHT = { hemi:.12, sun:.12, moon:.55, exp:.95, water:new THREE.Color('#2c4258') };
+const hemiDay = { sky:new THREE.Color('#eef5ff'), gnd:new THREE.Color('#b8a888') }, hemiNight = { sky:new THREE.Color('#4a5f9a'), gnd:new THREE.Color('#1b2233') };
+let stars = null;
+function buildStars(){ const n = 900, p = new Float32Array(n*3), r = rng(77); for(let i=0;i<n;i++){ const u = r()*2-1, t = r()*Math.PI*2, s = Math.sqrt(1-u*u); p.set([s*Math.cos(t)*220,u*220,s*Math.sin(t)*220],i*3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  stars = new THREE.Points(g,new THREE.PointsMaterial({ color:'#ffffff', size:1.6, sizeAttenuation:false, transparent:true, opacity:0, depthWrite:false })); scene.add(stars); }
+function stepNight(dt,t){
+  nightK += ((night ? 1 : 0) - nightK)*Math.min(1,dt*2.2); const k = nightK;
+  hemi.intensity = lerp(DAY.hemi,NIGHT.hemi,k); hemi.color.copy(hemiDay.sky).lerp(hemiNight.sky,k); hemi.groundColor.copy(hemiDay.gnd).lerp(hemiNight.gnd,k);
+  sun.intensity = lerp(DAY.sun,NIGHT.sun,k); moon.intensity = lerp(DAY.moon,NIGHT.moon,k); renderer.toneMappingExposure = lerp(DAY.exp,NIGHT.exp,k);
+  if(planetWater) planetWater.material.color.copy(DAY.water).lerp(NIGHT.water,k);
+  scene.environment = k > .5 ? null : ENV;   // sin reflejos de "estudio" de noche
+  if(buildingMat) buildingMat.emissiveIntensity = k*1.25; if(lampMat) lampMat.emissiveIntensity = k*3;
+  OBELISK.emissiveIntensity = k*.75; BAROLO_LIGHT.emissiveIntensity = k*(2.2+Math.sin(t*2.5)*.6);
+  PLANET_RING.emissiveIntensity = k*1.6; PLANET_RING.emissive.setHSL((t*.05)%1,.75,.55);
+  if(stars) stars.material.opacity = k*.9;
+  for(const L of SUBTE) if(L.mat) L.mat.emissiveIntensity = .35 + k*.9;
+  if(atmosphere){ atmosphere.material.uniforms.c.value.set(k > .5 ? '#6f8cff' : '#ffffff'); atmosphere.material.uniforms.k.value = lerp(.55,.4,k); }
+  const fl = PLACES.find(p => p.id === 'floralis'); if(fl && fl.obj){ const open = lerp(1.0,.14,k); for(const pt of fl.obj.userData.petals) pt.rotation.x = open; }
+}
+
+/* ---------- Entrada animada ---------- */
+let reveal = null;
+const easeBack = x => { const c = 1.70158; return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2); };
+function startReveal(){ if(REDUCED){ document.documentElement.classList.remove('intro'); return; }
+  for(const p of PLACES){ p.delay = .5 + Math.hypot(...p.P)/45; p.obj.scale.setScalar(.001); }
+  world.scale.setScalar(.7); reveal = { t0: performance.now() }; }
+function stepReveal(){ if(!reveal) return; const e = (performance.now()-reveal.t0)/1000;
+  world.scale.setScalar(.7+.3*(1-Math.pow(1-Math.min(1,e/2.2),3))); let done = e > 2.2;
+  for(const p of PLACES){ const x = (e-p.delay)/.6; if(x < 1) done = false; p.obj.scale.setScalar(x <= 0 ? .001 : x >= 1 ? 1 : Math.max(.001,easeBack(x))); }
+  if(done){ world.scale.setScalar(1); PLACES.forEach(p => p.obj.scale.setScalar(1)); reveal = null; document.documentElement.classList.remove('intro'); } }
+
+/* ---------- Bucle ---------- */
+let last = performance.now(), slowAcc = 0, slowN = 0, tStart = last;
+function resize(){ renderer.setSize(innerWidth,innerHeight,false); camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); if(mode === 'over' && !flight) ov.dist = clamp(ov.dist,R*1.55,homeDist()*1.7); }
+addEventListener('resize',resize);
+function frame(now){ requestAnimationFrame(frame); update(now); }
+function update(now){
+  const dt = Math.min(.05,(now-last)/1000); last = now; const t = (now-tStart)/1000;
+  stepReveal(); stepCamera(dt); stepMovers(dt,t); stepPeople(dt,t); stepNight(dt,t);
+  const cam = PLACES.find(p => p.id === 'caminito'); if(cam && cam.obj) cam.obj.userData.tango.rotation.y = t*1.4;
+  if(ringMark.visible) ringMark.material.opacity = .55+.35*Math.sin(t*3);
+  renderer.render(scene,camera); stepLabels();
+  if(t > 4 && t < 12){ slowAcc += dt; slowN++; if(slowN === 120 && slowAcc/slowN > .03 && renderer.getPixelRatio() > 1) renderer.setPixelRatio(1); }
+}
+
+/* ---------- Arranque ---------- */
+const setPct = p => $('pct').style.width = Math.round(p)+'%';
+const tick = () => new Promise(r => setTimeout(r,0));   // setTimeout: también avanza si la pestaña arranca en segundo plano
+(async () => {
+  try {
+    renderTexts(); setSpin(spin); resize();
+    ov.dist = homeDist()*1.25; ov.az = -.9; ov.el = .9; applyPose(poseOver());
+    setPct(10); await tick(); buildPlanet();
+    setPct(40); await tick(); buildStreets(); placeMonuments();
+    setPct(60); await tick(); const stats = buildCity(); window.__baires = { stats, places: PLACES.map(p => ({ id:p.id, P:p.P.map(v => +v.toFixed(2)) })),
+      advance: (sec=1) => { for(let i=0;i<sec*30;i++){ last -= 33; update(performance.now()); } } };   // para pruebas con la pestaña oculta
+    setPct(85); await tick(); spawnTraffic(); spawnBoats(); spawnShips(); spawnPeople(); buildSubte(); buildStars();
+    setPct(100); await tick();
+    renderer.compile(scene,camera);
+    startReveal(); ov.az = HOME.az; ov.el = HOME.el; ov.dist = homeDist(); flyTo('over',2.6);
+    $('loader').classList.add('done');
+    requestAnimationFrame(frame);
+  } catch(err){ console.error(err); document.querySelector('.loader .word').textContent = T('loadErr'); }
+})();
+</script>
+</body>
+</html>
